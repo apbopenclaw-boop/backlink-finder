@@ -1,3 +1,8 @@
+# fly.toml app configuration file generated for backlink-finder on 2026-04-26T20:14:02Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'backlink-finder'
 primary_region = 'ams'
 
@@ -14,3 +19,4 @@ primary_region = 'ams'
   memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 256
