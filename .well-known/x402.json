@@ -1,0 +1,40 @@
+{
+  "name": "Backlink Finder",
+  "description": "Find all domains linking to any website using Common Crawl hyperlink graph data. Includes enrichment with Majestic, Tranco, and PageRank scores. Gap analysis to find competitor backlinks you're missing.",
+  "version": "0.1.0",
+  "endpoints": [
+    {
+      "path": "/backlinks/{domain}",
+      "method": "GET",
+      "description": "Get all backlinks for a domain with enrichment data",
+      "price": "$0.05 USDC",
+      "response_type": "application/json"
+    },
+    {
+      "path": "/gap?yours={domain}&competitor={domain}",
+      "method": "GET",
+      "description": "Gap analysis: domains linking to competitor but not to you",
+      "price": "$0.10 USDC",
+      "response_type": "application/json"
+    },
+    {
+      "path": "/domains",
+      "method": "GET",
+      "description": "List all available domains (free)",
+      "price": "free",
+      "response_type": "application/json"
+    },
+    {
+      "path": "/health",
+      "method": "GET",
+      "description": "Health check (free)",
+      "price": "free",
+      "response_type": "application/json"
+    }
+  ],
+  "payment": {
+    "protocol": "x402",
+    "network": "eip155:84532",
+    "currency": "USDC"
+  }
+}

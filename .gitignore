@@ -1,0 +1,6 @@
+.env
+.fly-token
+__pycache__/
+*.pyc
+.venv/
+deploy.sh
