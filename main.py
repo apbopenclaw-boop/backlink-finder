@@ -765,7 +765,8 @@ async def find_email(
     cached = _check_email_cache(first_name, last_name, domain)
     if cached:
         return {
-            "email": cached["email"], "confidence": cached["confidence"],
+            "email": cached["email"], "email_found": True,
+            "confidence": cached["confidence"],
             "first_name": first_name, "last_name": last_name,
             "title": cached["title"], "company": cached["company"],
             "domain": domain, "cached": True,
@@ -775,11 +776,14 @@ async def find_email(
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
 
-    _save_email_lookup(first_name, last_name, domain, result["email"], result["confidence"], result["title"], result["company"])
+    email = result["email"] or None
+    if email:
+        _save_email_lookup(first_name, last_name, domain, email, result["confidence"], result["title"], result["company"])
     _increment_monthly_count()
 
     return {
-        "email": result["email"], "confidence": result["confidence"],
+        "email": email, "email_found": bool(email),
+        "confidence": result["confidence"] if email else "unavailable",
         "first_name": result["first_name"], "last_name": result["last_name"],
         "title": result["title"], "company": result["company"],
         "domain": domain, "cached": False,
