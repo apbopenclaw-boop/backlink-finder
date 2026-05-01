@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backlink Finder — Backlink Discovery API for AI Agents</title>
+<meta name="description" content="Discover who links to any domain. The first backlink API built for AI agents — pay per query with USDC, no API keys or subscriptions needed.">
+<link rel="canonical" href="https://backlink-finder.fly.dev">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Backlink Finder — Backlink Discovery API for AI Agents">
+<meta property="og:description" content="Discover who links to any domain. AI agents pay per query with USDC via x402. No API keys, no subscriptions.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://backlink-finder.fly.dev">
+<meta property="og:image" content="https://backlink-finder.fly.dev/static/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Backlink Finder — Backlink Discovery API for AI Agents">
+<meta name="twitter:description" content="Discover who links to any domain. Pay per query via x402 — built for AI agents.">
+<meta name="twitter:image" content="https://backlink-finder.fly.dev/static/og-image.jpg">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Backlink Finder","url":"https://backlink-finder.fly.dev","description":"Backlink discovery API for AI agents. Pay per query with USDC via x402 protocol.","applicationCategory":"SEO Tool","operatingSystem":"Web","offers":{"@type":"Offer","price":"0.10","priceCurrency":"USD","description":"Per-query pricing via USDC micropayments"}}
+</script>
+
+<!-- Plausible Analytics -->
+<script defer data-domain="backlink-finder.fly.dev" src="https://plausible.io/js/script.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fff5ee;--card:#ffffff;--border:#e2dbd3;--text:#0f161e;--muted:#6b7280;--accent:#004038;--accent-hover:#00544c;--green:#7edcaf;--amber:#f59e0b;--cyan:#00544c;--peach:#fde8ce;--forest:#012620}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{color:var(--accent-hover)}
+
+.container{max-width:960px;margin:0 auto;padding:0 24px}
+
+/* Nav */
+nav{border-bottom:1px solid var(--border);padding:16px 0}
+nav .container{display:flex;justify-content:space-between;align-items:center}
+nav .logo{font-weight:700;font-size:18px;color:var(--text)}
+nav .logo span{color:var(--accent)}
+nav .links{display:flex;gap:24px;font-size:14px;color:var(--muted)}
+nav .links a{color:var(--muted)}nav .links a:hover{color:var(--text)}
+
+/* Badge */
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;margin-bottom:20px}
+.badge-agent{background:var(--peach);color:var(--accent);border:1px solid #e2dbd3}
+.badge-x402{background:#d4f1f9;color:var(--accent);border:1px solid #b0dde8}
+
+/* Hero */
+.hero{padding:80px 0 48px;text-align:center}
+.hero h1{font-size:clamp(28px,5vw,48px);font-weight:700;line-height:1.15;margin-bottom:16px}
+.hero h1 span{background:linear-gradient(135deg,#004038,#7edcaf);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);font-size:18px;max-width:600px;margin:0 auto 12px}
+.hero .sub{color:var(--muted);font-size:14px;max-width:560px;margin:0 auto 40px}
+.hero .sub code{background:var(--card);border:1px solid var(--border);padding:2px 6px;border-radius:4px;font-size:13px}
+
+/* Search */
+.search-box{max-width:560px;margin:0 auto;position:relative}
+.search-box input{width:100%;padding:16px 140px 16px 20px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;outline:none;transition:border .2s}
+.search-box input:focus{border-color:var(--accent)}
+.search-box input::placeholder{color:var(--muted)}
+.search-box button{position:absolute;right:6px;top:6px;bottom:6px;padding:0 24px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;transition:background .2s}
+.search-box button:hover{background:var(--accent-hover)}
+.search-box button:disabled{opacity:.5;cursor:not-allowed}
+.search-hint{text-align:center;margin-top:10px;font-size:13px;color:var(--muted)}
+
+/* Results */
+.results{max-width:700px;margin:32px auto 0;display:none}
+.results.active{display:block}
+.results-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+.results-header h3{font-size:18px;font-weight:600}
+.results-header .count{color:var(--muted);font-size:14px}
+.result-table{width:100%;border-collapse:collapse}
+.result-table th{text-align:left;font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px;border-bottom:1px solid var(--border)}
+.result-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:14px}
+.result-table tr:last-child td{border-bottom:none}
+.result-table .domain-cell{font-weight:500}
+.result-table .num{text-align:right;font-variant-numeric:tabular-nums}
+
+.status-msg{text-align:center;padding:40px 0;color:var(--muted);font-size:15px}
+.status-msg .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.error-msg{color:#ef4444;text-align:center;padding:16px;font-size:14px}
+.preview-note{text-align:center;margin-top:12px;font-size:13px;color:var(--muted)}
+.upgrade-cta{text-align:center;margin-top:16px;padding:16px;background:var(--peach);border:1px solid #e2dbd3;border-radius:16px;font-size:14px}
+.upgrade-cta strong{color:var(--accent)}
+
+/* Available domains */
+.domains-section{padding:48px 0}
+.domains-section h2{font-size:22px;font-weight:600;margin-bottom:8px;text-align:center}
+.domains-section .subtitle{color:var(--muted);text-align:center;margin-bottom:24px;font-size:14px}
+.domain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.domain-chip{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;transition:border .2s,background .2s;display:flex;justify-content:space-between;align-items:center}
+.domain-chip:hover{border-color:var(--accent);background:var(--peach)}
+.domain-chip .name{font-weight:500}
+.domain-chip .bl-count{color:var(--muted);font-size:12px}
+
+/* Agent section */
+.agent-section{padding:64px 0;border-top:1px solid var(--border)}
+.agent-section .container{display:flex;gap:48px;align-items:center}
+.agent-section .copy{flex:1}
+.agent-section .copy h2{font-size:22px;font-weight:600;margin-bottom:12px}
+.agent-section .copy p{color:var(--muted);font-size:15px;margin-bottom:12px}
+.agent-section .copy ul{list-style:none;font-size:14px;color:var(--muted)}
+.agent-section .copy li{padding:4px 0}
+.agent-section .copy li::before{content:"→ ";color:var(--accent)}
+.agent-section .diagram{flex:1;background:var(--forest);border:none;border-radius:16px;padding:28px;font-family:'SF Mono',Consolas,monospace;font-size:13px;line-height:2;color:#8aaa9a}
+.agent-section .diagram .step{color:#e4e4e7;font-weight:500}
+.agent-section .diagram .arrow{color:#7edcaf}
+.agent-section .diagram .payment{color:#d5ff4d}
+
+/* Features */
+.features{padding:64px 0;border-top:1px solid var(--border)}
+.features h2{font-size:22px;font-weight:600;text-align:center;margin-bottom:32px}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.feature{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.feature .icon{font-size:24px;margin-bottom:12px}
+.feature h3{font-size:16px;font-weight:600;margin-bottom:6px}
+.feature p{color:var(--muted);font-size:14px}
+
+/* Use cases */
+.usecases{padding:64px 0;border-top:1px solid var(--border)}
+.usecases h2{font-size:22px;font-weight:600;text-align:center;margin-bottom:8px}
+.usecases .subtitle{color:var(--muted);text-align:center;margin-bottom:32px;font-size:15px;max-width:640px;margin-left:auto;margin-right:auto}
+.usecase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.usecase{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.usecase .icon{font-size:24px;margin-bottom:12px}
+.usecase h3{font-size:16px;font-weight:600;margin-bottom:6px}
+.usecase p{color:var(--muted);font-size:14px}
+
+/* Pricing */
+.pricing{padding:64px 0;border-top:1px solid var(--border);text-align:center}
+.pricing h2{font-size:22px;font-weight:600;margin-bottom:8px}
+.pricing .subtitle{color:var(--muted);margin-bottom:32px;font-size:14px}
+.price-cards{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+.price-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;min-width:240px;flex:1;max-width:300px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.price-card h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.price-card .price{font-size:32px;font-weight:700;margin-bottom:4px}
+.price-card .price span{font-size:14px;font-weight:400;color:var(--muted)}
+.price-card .unit{color:var(--muted);font-size:13px;margin-bottom:16px}
+.price-card ul{list-style:none;text-align:left;font-size:14px}
+.price-card li{padding:4px 0;color:var(--muted)}
+.price-card li::before{content:"✓ ";color:var(--green)}
+
+/* API */
+.api-section{padding:64px 0;border-top:1px solid var(--border)}
+.api-section h2{font-size:22px;font-weight:600;text-align:center;margin-bottom:24px}
+.code-block{background:var(--forest);border:none;border-radius:16px;padding:20px;font-family:'SF Mono',Consolas,monospace;font-size:13px;overflow-x:auto;color:#b8d8c8;line-height:1.7}
+.code-block .comment{color:#5a7a6a}
+.code-block .url{color:var(--accent)}
+.code-block .key{color:#7edcaf}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:32px 0;text-align:center;color:var(--muted);font-size:13px}
+footer a{color:var(--muted)}
+
+@media(max-width:768px){
+  .agent-section .container{flex-direction:column;gap:24px}
+}
+@media(max-width:600px){
+  .hero{padding:48px 0 32px}
+  .price-cards{flex-direction:column;align-items:center}
+  .domain-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">backlink<span>finder</span></div>
+    <div class="links">
+      <a href="#agents">For Agents</a>
+      <a href="#domains">Domains</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#api">API</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <span class="badge badge-agent">Built for AI Agents</span>
+    <h1>Backlink data for <span>any domain</span></h1>
+    <p>The first backlink API where AI agents pay per query with USDC. No API keys, no subscriptions — just the x402 protocol.</p>
+    <p class="sub">Web-scale backlink data for any domain. Try a free preview below.</p>
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Enter a domain (e.g. tesla.com)" autocomplete="off">
+      <button id="search-btn" onclick="doSearch()">Preview</button>
+    </div>
+    <p class="search-hint">Free preview shows top 5 backlinks for cached domains</p>
+  </div>
+</section>
+
+<div class="results" id="results"></div>
+
+<section class="domains-section" id="domains">
+  <div class="container">
+    <h2>Example Results</h2>
+    <p class="subtitle">See the data we deliver — click any domain for a free preview</p>
+    <div class="domain-grid" id="domain-grid">
+      <div class="status-msg"><span class="spinner"></span> Loading domains…</div>
+    </div>
+  </div>
+</section>
+
+<section class="agent-section" id="agents">
+  <div class="container">
+    <div class="copy">
+      <span class="badge badge-x402">x402 Protocol</span>
+      <h2>The backlink API that agents can buy from</h2>
+      <p>Traditional SEO APIs require accounts, API keys, and billing setup. Backlink Finder uses the x402 payment protocol — any AI agent with a USDC wallet can query instantly.</p>
+      <ul>
+        <li>No registration or API keys needed</li>
+        <li>Agent discovers pricing via <code>/.well-known/x402.json</code></li>
+        <li>Pay $0.10–$0.15 per query in USDC</li>
+        <li>Works on Base network (low gas fees)</li>
+        <li>Results returned instantly for cached domains</li>
+      </ul>
+    </div>
+    <div class="diagram">
+      <span class="step">1. Agent calls /backlinks/example.com</span><br>
+      <span class="arrow">   ↓</span> <span>API returns 402 + payment details</span><br><br>
+      <span class="step">2. Agent pays $0.10 USDC</span><br>
+      <span class="arrow">   ↓</span> <span class="payment">x402 facilitator verifies payment</span><br><br>
+      <span class="step">3. API returns full backlink data</span><br>
+      <span class="arrow">   ↓</span> <span>Agent uses data for SEO analysis</span>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="container">
+    <h2>How It Works</h2>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="icon">🌐</div>
+        <h3>Web-Scale Data</h3>
+        <p>We scan billions of hyperlinks from the latest web crawl to find every domain linking to your target.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">⚡</div>
+        <h3>On-Demand Crawling</h3>
+        <p>Domain not cached? We crawl it live from Common Crawl in 2–5 minutes. Results are stored for instant future access.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🔀</div>
+        <h3>Gap Analysis</h3>
+        <p>Compare two domains to find link-building opportunities — sites linking to your competitor but not to you.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🤖</div>
+        <h3>Agent-Native</h3>
+        <p>Built for AI agents from day one. x402 payment protocol means any agent with a wallet can query — no OAuth, no API keys.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="usecases" id="usecases">
+  <div class="container">
+    <h2>Who's It For</h2>
+    <p class="subtitle">Backlink data is a window into how the web connects. Valuable for anyone making decisions based on a domain's authority, reach, or relationships.</p>
+    <div class="usecase-grid">
+      <div class="usecase">
+        <div class="icon">📈</div>
+        <h3>SEO &amp; Link Building</h3>
+        <p>Identify who links to your competitors and find opportunities to earn links from the same sites. Build domain authority faster with data-driven outreach.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">🔍</div>
+        <h3>Competitive Analysis</h3>
+        <p>See your competitor's full backlink profile. Understand their content strategy, partnership network, and where they're getting visibility.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">🤝</div>
+        <h3>Partnerships &amp; BD</h3>
+        <p>Discover which organizations are connected by links. Map industry relationships and find warm introduction paths through shared backlink networks.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">🏢</div>
+        <h3>Procurement &amp; Vendor Assessment</h3>
+        <p>Evaluate a vendor's web presence and credibility. A strong backlink profile signals industry trust, media coverage, and established partnerships.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">💼</div>
+        <h3>M&amp;A &amp; Due Diligence</h3>
+        <p>Assess a company's digital footprint as part of investment or acquisition due diligence. Backlinks reveal brand strength, market position, and organic reach.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">🌐</div>
+        <h3>Domain Valuation</h3>
+        <p>Buying a domain? Its backlink profile is one of the most important factors in its SEO value. Check before you buy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="container">
+    <h2>Pay Per Query</h2>
+    <p class="subtitle">No subscriptions. No accounts. USDC on Base via x402.</p>
+    <div class="price-cards">
+      <div class="price-card">
+        <h3>Backlink Lookup</h3>
+        <div class="price">$0.10 <span>USDC</span></div>
+        <div class="unit">per domain</div>
+        <ul>
+          <li>All linking domains</li>
+          <li>Host count per domain</li>
+          <li>On-demand crawling included</li>
+          <li>Cached results = instant</li>
+        </ul>
+      </div>
+      <div class="price-card">
+        <h3>Gap Analysis</h3>
+        <div class="price">$0.15 <span>USDC</span></div>
+        <div class="unit">per comparison</div>
+        <ul>
+          <li>Compare any two domains</li>
+          <li>Sorted by authority</li>
+          <li>Link-building opportunities</li>
+          <li>Export-ready JSON</li>
+        </ul>
+      </div>
+      <div class="price-card">
+        <h3>Free Preview</h3>
+        <div class="price">$0 </div>
+        <div class="unit">cached domains only</div>
+        <ul>
+          <li>Top 5 backlinks shown</li>
+          <li>Total backlink count</li>
+          <li>Try before you pay</li>
+          <li>No wallet required</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="api-section" id="api">
+  <div class="container">
+    <h2>API Reference</h2>
+    <p class="subtitle" style="text-align:center;color:var(--muted);margin-bottom:24px;font-size:14px">All endpoints return JSON. Free endpoints need no authentication. Paid endpoints use the <a href="https://x402.org">x402</a> payment protocol.</p>
+
+    <div style="display:grid;gap:24px">
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--green)">FREE</span> &nbsp; List Available Domains</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Returns all domains with cached backlink data, including backlink counts and crawl dates.</p>
+        <div class="code-block">curl <span class="url">https://backlink-finder.fly.dev/domains</span>
+
+<span class="comment"># Response: { "domains": [{ "domain": "tesla.com", "backlink_count": 30542, ... }], "total": 19 }</span></div>
+      </div>
+
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--green)">FREE</span> &nbsp; Preview Backlinks</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Returns top 5 notable backlinks for any cached domain. Great for evaluating data quality before paying.</p>
+        <div class="code-block">curl <span class="url">https://backlink-finder.fly.dev/preview/tesla.com</span>
+
+<span class="comment"># Response: { "domain": "tesla.com", "total_backlinks": 30542, "showing": 5,</span>
+<span class="comment">#   "backlinks": [{ "linking_domain": "alibaba.com", "num_hosts": 86199, "authority_score": 74 }, ...] }</span></div>
+      </div>
+
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--accent)">$0.10</span> &nbsp; Full Backlink Lookup</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Returns all linking domains for any domain. Crawls on-demand from web data if not cached (2–5 min). AI agents pay automatically via x402.</p>
+        <div class="code-block">curl <span class="url">https://backlink-finder.fly.dev/backlinks/example.com</span>
+
+<span class="comment"># Without payment → 402 response with x402 payment details</span>
+<span class="comment"># With x402 payment → { "domain": "...", "backlink_count": N, "backlinks": [{"linking_domain": "...", "authority_score": 74, ...}] }</span></div>
+      </div>
+
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--accent)">$0.15</span> &nbsp; Gap Analysis</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Compare two domains — find sites linking to a competitor but not to you. Both domains must be cached.</p>
+        <div class="code-block">curl "<span class="url">https://backlink-finder.fly.dev/gap?yours=you.com&amp;competitor=them.com</span>"
+
+<span class="comment"># Response: { "gap_count": 847, "opportunities": [{ "domain": "techcrunch.com", ... }] }</span></div>
+      </div>
+
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--muted)">DISCOVERY</span> &nbsp; Agent Integration</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:8px">AI agents discover endpoints, pricing, and payment details automatically via the x402 well-known file.</p>
+        <div class="code-block">curl <span class="url">https://backlink-finder.fly.dev/.well-known/x402.json</span>
+
+<span class="comment"># Returns: payment network, wallet address, per-endpoint pricing, and schemas</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    Powered by <a href="https://commoncrawl.org">Common Crawl</a> · Payments via <a href="https://x402.org">x402</a> protocol · USDC on <a href="https://base.org">Base</a>
+  </div>
+</footer>
+
+<script>
+const API = '';
+const grid = document.getElementById('domain-grid');
+const resultsDiv = document.getElementById('results');
+const searchInput = document.getElementById('search-input');
+const searchBtn = document.getElementById('search-btn');
+
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+async function loadDomains() {
+  try {
+    const r = await fetch(API + '/domains');
+    const d = await r.json();
+    if (!d.domains.length) { grid.innerHTML = '<p class="status-msg">No domains cached yet.</p>'; return; }
+    const MIN_BACKLINKS = 5000;
+    const featured = d.domains
+      .filter(dm => dm.backlink_count >= MIN_BACKLINKS)
+      .sort((a, b) => b.backlink_count - a.backlink_count);
+    if (!featured.length) { grid.innerHTML = '<p class="status-msg">No featured domains yet.</p>'; return; }
+    grid.innerHTML = featured
+      .map(dm =>
+        `<div class="domain-chip" onclick="searchDomain('${dm.domain}')">
+          <span class="name">${dm.domain}</span>
+          <span class="bl-count">${dm.backlink_count.toLocaleString()} links</span>
+        </div>`
+      ).join('');
+  } catch (e) {
+    grid.innerHTML = '<p class="error-msg">Failed to load domains</p>';
+  }
+}
+
+function searchDomain(d) {
+  searchInput.value = d;
+  doSearch();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function doSearch() {
+  const domain = searchInput.value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if (!domain) return;
+  searchInput.value = domain;
+  searchBtn.disabled = true;
+  resultsDiv.className = 'results active';
+  resultsDiv.innerHTML = `<div class="container"><div class="status-msg"><span class="spinner"></span> Looking up <strong>${esc(domain)}</strong>…</div></div>`;
+
+  try {
+    const r = await fetch(API + '/preview/' + encodeURIComponent(domain));
+    if (r.ok) {
+      const data = await r.json();
+      showPreview(data);
+    } else if (r.status === 404) {
+      resultsDiv.innerHTML = `<div class="container"><div class="status-msg">
+        <strong>${esc(domain)}</strong> is not cached yet.<br><br>
+        Use the API to crawl it on-demand for $0.10 USDC — takes 2–5 minutes.<br>
+        <span style="font-size:13px;color:var(--muted);margin-top:8px;display:block">
+          AI agents handle payment automatically via x402. See <a href="#api">API docs</a>.
+        </span>
+      </div></div>`;
+    } else {
+      const err = await r.text();
+      resultsDiv.innerHTML = `<div class="container"><div class="error-msg">${esc(err)}</div></div>`;
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<div class="container"><div class="error-msg">Request failed: ${esc(e.message)}</div></div>`;
+  }
+  searchBtn.disabled = false;
+}
+
+function showPreview(data) {
+  const bls = data.backlinks || [];
+  const total = data.total_backlinks;
+
+  let html = `<div class="container">
+    <div class="results-header">
+      <h3>${esc(data.domain)}</h3>
+      <span class="count">${total.toLocaleString()} total backlinks</span>
+    </div>
+    <table class="result-table">
+      <thead><tr><th>Linking Domain</th><th style="text-align:right">Authority</th><th style="text-align:right">Hosts</th></tr></thead>
+      <tbody>`;
+
+  for (const bl of bls) {
+    html += `<tr>
+      <td class="domain-cell">${esc(bl.linking_domain)}</td>
+      <td class="num">${bl.authority_score ?? '–'}</td>
+      <td class="num">${bl.num_hosts?.toLocaleString() ?? '–'}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+
+  if (total > 5) {
+    html += `<div class="upgrade-cta">
+      Showing <strong>5 of ${total.toLocaleString()}</strong> backlinks.
+      Pay <strong>$0.10 USDC</strong> via the API for the complete list.
+    </div>`;
+  }
+
+  html += `</div>`;
+  resultsDiv.innerHTML = html;
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+loadDomains();
+</script>
+</body>
+</html>

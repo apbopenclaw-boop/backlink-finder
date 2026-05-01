@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Email Enrichment API — Contact Discovery for AI Agents</title>
+<meta name="description" content="Find verified business email addresses by name and company domain. The first enrichment API built for AI agents — pay per lookup with USDC, no API keys needed.">
+<link rel="canonical" href="https://backlink-finder.fly.dev/enrichment">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Email Enrichment API — Contact Discovery for AI Agents">
+<meta property="og:description" content="Find verified business emails by name and domain. AI agents pay per lookup with USDC via x402. No API keys, no subscriptions.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://backlink-finder.fly.dev/enrichment">
+<meta property="og:image" content="https://backlink-finder.fly.dev/static/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Email Enrichment API — Contact Discovery for AI Agents">
+<meta name="twitter:description" content="Find verified business emails by name and domain. Pay per lookup via x402 — built for AI agents.">
+<meta name="twitter:image" content="https://backlink-finder.fly.dev/static/og-image.jpg">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Email Enrichment API","url":"https://backlink-finder.fly.dev/enrichment","description":"Email enrichment API for AI agents. Find business contacts by name and domain. Pay per lookup with USDC via x402 protocol.","applicationCategory":"Business Tool","operatingSystem":"Web","offers":{"@type":"Offer","price":"0.05","priceCurrency":"USD","description":"Per-lookup pricing via USDC micropayments"}}
+</script>
+
+<!-- Plausible Analytics -->
+<script defer data-domain="backlink-finder.fly.dev" src="https://plausible.io/js/script.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fff5ee;--card:#ffffff;--border:#e2dbd3;--text:#0f161e;--muted:#6b7280;--accent:#004038;--accent-hover:#00544c;--green:#7edcaf;--amber:#f59e0b;--cyan:#00544c;--indigo:#004038;--peach:#fde8ce;--forest:#012620}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{color:var(--accent-hover)}
+
+.container{max-width:960px;margin:0 auto;padding:0 24px}
+
+/* Nav */
+nav{border-bottom:1px solid var(--border);padding:16px 0}
+nav .container{display:flex;justify-content:space-between;align-items:center}
+nav .logo{font-weight:700;font-size:18px;color:var(--text)}
+nav .logo span{color:var(--accent)}
+nav .links{display:flex;gap:24px;font-size:14px;color:var(--muted)}
+nav .links a{color:var(--muted)}nav .links a:hover{color:var(--text)}
+
+/* Badge */
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;margin-bottom:20px}
+.badge-agent{background:var(--peach);color:var(--accent);border:1px solid #e2dbd3}
+.badge-x402{background:#d4f1f9;color:var(--accent);border:1px solid #b0dde8}
+
+/* Hero */
+.hero{padding:80px 0 48px;text-align:center}
+.hero h1{font-size:clamp(28px,5vw,48px);font-weight:700;line-height:1.15;margin-bottom:16px}
+.hero h1 span{background:linear-gradient(135deg,#004038,#7edcaf);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);font-size:18px;max-width:600px;margin:0 auto 12px}
+.hero .sub{color:var(--muted);font-size:14px;max-width:560px;margin:0 auto 40px}
+
+/* Search */
+.search-box{max-width:620px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px}
+.search-box input{padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:15px;outline:none;transition:border .2s}
+.search-box input:focus{border-color:var(--accent)}
+.search-box input::placeholder{color:var(--muted)}
+.search-box button{padding:14px 24px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;transition:background .2s;white-space:nowrap}
+.search-box button:hover{background:var(--accent-hover)}
+.search-box button:disabled{opacity:.5;cursor:not-allowed}
+.search-hint{text-align:center;margin-top:10px;font-size:13px;color:var(--muted)}
+
+/* Results */
+.results{max-width:700px;margin:32px auto 0;display:none}
+.results.active{display:block}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin:0 24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.result-card h3{font-size:18px;font-weight:600;margin-bottom:16px}
+.result-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.result-row:last-child{border-bottom:none}
+.result-label{color:var(--muted)}
+.result-value{font-weight:500}
+.result-value.email{color:var(--accent);font-size:16px}
+.result-value .confidence{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;margin-left:8px}
+.confidence-high{background:rgba(34,197,94,.15);color:var(--green)}
+.confidence-medium{background:rgba(245,158,11,.15);color:var(--amber)}
+.confidence-low{background:rgba(239,68,68,.15);color:#ef4444}
+
+.status-msg{text-align:center;padding:40px 0;color:var(--muted);font-size:15px}
+.status-msg .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{color:#ef4444;text-align:center;padding:16px;font-size:14px}
+
+/* Agent section */
+.agent-section{padding:64px 0;border-top:1px solid var(--border)}
+.agent-section .container{display:flex;gap:48px;align-items:center}
+.agent-section .copy{flex:1}
+.agent-section .copy h2{font-size:22px;font-weight:600;margin-bottom:12px}
+.agent-section .copy p{color:var(--muted);font-size:15px;margin-bottom:12px}
+.agent-section .copy ul{list-style:none;font-size:14px;color:var(--muted)}
+.agent-section .copy li{padding:4px 0}
+.agent-section .copy li::before{content:"→ ";color:var(--accent)}
+.agent-section .diagram{flex:1;background:var(--forest);border:none;border-radius:16px;padding:28px;font-family:'SF Mono',Consolas,monospace;font-size:13px;line-height:2;color:#8aaa9a}
+.agent-section .diagram .step{color:#e4e4e7;font-weight:500}
+.agent-section .diagram .arrow{color:#7edcaf}
+.agent-section .diagram .payment{color:#d5ff4d}
+
+/* Features */
+.features{padding:64px 0;border-top:1px solid var(--border)}
+.features h2{font-size:22px;font-weight:600;text-align:center;margin-bottom:32px}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.feature{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.feature .icon{font-size:24px;margin-bottom:12px}
+.feature h3{font-size:16px;font-weight:600;margin-bottom:6px}
+.feature p{color:var(--muted);font-size:14px}
+
+/* Use cases */
+.usecases{padding:64px 0;border-top:1px solid var(--border)}
+.usecases h2{font-size:22px;font-weight:600;text-align:center;margin-bottom:8px}
+.usecases .subtitle{color:var(--muted);text-align:center;margin-bottom:32px;font-size:15px;max-width:640px;margin-left:auto;margin-right:auto}
+.usecase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.usecase{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.usecase .icon{font-size:24px;margin-bottom:12px}
+.usecase h3{font-size:16px;font-weight:600;margin-bottom:6px}
+.usecase p{color:var(--muted);font-size:14px}
+
+/* Pricing */
+.pricing{padding:64px 0;border-top:1px solid var(--border);text-align:center}
+.pricing h2{font-size:22px;font-weight:600;margin-bottom:8px}
+.pricing .subtitle{color:var(--muted);margin-bottom:32px;font-size:14px}
+.price-cards{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+.price-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px;min-width:260px;flex:1;max-width:340px}
+.price-card.featured{border-color:var(--accent);box-shadow:0 4px 16px rgba(0,64,56,.1)}
+.price-card h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.price-card .price{font-size:32px;font-weight:700;margin-bottom:4px}
+.price-card .price span{font-size:14px;font-weight:400;color:var(--muted)}
+.price-card .unit{color:var(--muted);font-size:13px;margin-bottom:16px}
+.price-card ul{list-style:none;text-align:left;font-size:14px}
+.price-card li{padding:4px 0;color:var(--muted)}
+.price-card li::before{content:"✓ ";color:var(--green)}
+
+/* API */
+.api-section{padding:64px 0;border-top:1px solid var(--border)}
+.api-section h2{font-size:22px;font-weight:600;text-align:center;margin-bottom:24px}
+.code-block{background:var(--forest);border:none;border-radius:16px;padding:20px;font-family:'SF Mono',Consolas,monospace;font-size:13px;overflow-x:auto;color:#b8d8c8;line-height:1.7}
+.code-block .comment{color:#5a7a6a}
+.code-block .url{color:var(--accent)}
+.code-block .key{color:#7edcaf}
+.code-block .string{color:#d5ff4d}
+
+/* CTA */
+.cta-section{padding:64px 0;border-top:1px solid var(--border);text-align:center}
+.cta-section h2{font-size:22px;font-weight:600;margin-bottom:12px}
+.cta-section p{color:var(--muted);font-size:15px;margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto}
+.cta-section .links{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.cta-section .links a{padding:12px 28px;border-radius:10px;font-weight:600;font-size:14px;transition:all .2s}
+.cta-section .links .primary{background:var(--accent);color:#fff}
+.cta-section .links .primary:hover{background:var(--accent-hover)}
+.cta-section .links .secondary{border:1px solid var(--border);color:var(--text)}
+.cta-section .links .secondary:hover{border-color:var(--accent)}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:32px 0;text-align:center;color:var(--muted);font-size:13px}
+footer a{color:var(--muted)}
+footer .back{margin-top:8px}
+
+@media(max-width:768px){
+  .agent-section .container{flex-direction:column;gap:24px}
+  .search-box{grid-template-columns:1fr 1fr;gap:8px}
+}
+@media(max-width:480px){
+  .hero{padding:48px 0 32px}
+  .price-cards{flex-direction:column;align-items:center}
+  .search-box{grid-template-columns:1fr;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">email<span>enrichment</span></div>
+    <div class="links">
+      <a href="#agents">For Agents</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#api">API</a>
+      <a href="/" style="color:var(--indigo)">Backlinks</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <span class="badge badge-agent">Built for AI Agents</span>
+    <h1>Find anyone's <span>business email</span></h1>
+    <p>The enrichment API where AI agents pay per lookup with USDC. Give us a name and company domain — we'll find the email.</p>
+    <p class="sub">Try a live lookup below. Paid results include email, confidence score, title, and company info.</p>
+    <div class="search-box">
+      <input type="text" id="first-name" placeholder="First name" autocomplete="off">
+      <input type="text" id="last-name" placeholder="Last name" autocomplete="off">
+      <input type="text" id="domain" placeholder="company.com" autocomplete="off">
+      <button id="search-btn" onclick="doLookup()">Lookup</button>
+    </div>
+    <p class="search-hint">Live demo — calls the real API endpoint (x402 payment required for full results)</p>
+  </div>
+</section>
+
+<div class="results" id="results"></div>
+
+<section class="agent-section" id="agents">
+  <div class="container">
+    <div class="copy">
+      <span class="badge badge-x402">x402 Protocol</span>
+      <h2>Enrichment that agents can buy autonomously</h2>
+      <p>Traditional enrichment APIs require accounts, API keys, and monthly plans. This API uses the x402 payment protocol — any AI agent with a USDC wallet can look up contacts instantly.</p>
+      <ul>
+        <li>No registration or API keys needed</li>
+        <li>Agent discovers pricing via standard x402 flow</li>
+        <li>Pay $0.05 per lookup in USDC on Base</li>
+        <li>Returns email, confidence score, title, company</li>
+        <li>250M+ contact database</li>
+      </ul>
+    </div>
+    <div class="diagram">
+      <span class="step">1. Agent calls /find?first_name=...&amp;last_name=...&amp;domain=...</span><br>
+      <span class="arrow">   ↓</span> <span>API returns 402 + payment details</span><br><br>
+      <span class="step">2. Agent pays $0.05 USDC</span><br>
+      <span class="arrow">   ↓</span> <span class="payment">x402 facilitator verifies payment</span><br><br>
+      <span class="step">3. API returns enriched contact data</span><br>
+      <span class="arrow">   ↓</span> <span>Agent uses email for outreach / CRM</span>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="container">
+    <h2>Why This Exists</h2>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="icon">📧</div>
+        <h3>Verified Emails</h3>
+        <p>We return professional email addresses with confidence scores so you know how reliable each result is.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">⚡</div>
+        <h3>Instant Results</h3>
+        <p>Sub-second response times. No queuing, no batch processing — get the email you need right now.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🤖</div>
+        <h3>Agent-Native</h3>
+        <p>Built for AI agents from day one. x402 payment protocol means any agent with a wallet can query — no OAuth, no API keys.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">💰</div>
+        <h3>Pay Per Lookup</h3>
+        <p>$0.05 per result. No monthly minimums, no credits that expire, no enterprise sales calls. Just pay for what you use.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="usecases" id="usecases">
+  <div class="container">
+    <h2>Use Cases</h2>
+    <p class="subtitle">Any workflow that needs to go from a person's name to their professional email address.</p>
+    <div class="usecase-grid">
+      <div class="usecase">
+        <div class="icon">📬</div>
+        <h3>Sales Prospecting</h3>
+        <p>Build targeted prospect lists by finding emails for decision makers at your target accounts. Feed directly into your outreach pipeline.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">🔗</div>
+        <h3>Link Building Outreach</h3>
+        <p>Found a backlink opportunity? Look up the site owner or content manager's email to send a personalized pitch.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">🤝</div>
+        <h3>Partnership Outreach</h3>
+        <p>Reach the right person at a potential partner company. Skip the generic contact form and email the decision maker directly.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">📰</div>
+        <h3>PR &amp; Media Relations</h3>
+        <p>Find journalist and editor emails for press outreach. Turn a byline into a direct contact for your next story pitch.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">🔄</div>
+        <h3>CRM Enrichment</h3>
+        <p>Fill in missing emails in your CRM automatically. AI agents can enrich records in bulk without manual research.</p>
+      </div>
+      <div class="usecase">
+        <div class="icon">🎯</div>
+        <h3>Recruiting</h3>
+        <p>Found a great candidate on LinkedIn? Look up their professional email to reach out directly with your opportunity.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="container">
+    <h2>Simple Pricing</h2>
+    <p class="subtitle">No subscriptions. No accounts. USDC on Base via x402.</p>
+    <div class="price-cards">
+      <div class="price-card featured">
+        <h3>Email Lookup</h3>
+        <div class="price">$0.05 <span>USDC</span></div>
+        <div class="unit">per lookup</div>
+        <ul>
+          <li>Verified email address</li>
+          <li>Confidence score</li>
+          <li>Job title &amp; company</li>
+          <li>Instant response</li>
+          <li>250M+ contacts</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="api-section" id="api">
+  <div class="container">
+    <h2>API Reference</h2>
+    <p style="text-align:center;color:var(--muted);margin-bottom:24px;font-size:14px">Returns JSON. Uses the <a href="https://x402.org">x402</a> payment protocol — any agent with a USDC wallet can call it.</p>
+
+    <div style="display:grid;gap:24px">
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--accent)">$0.05</span> &nbsp; Find Email</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Look up a professional email address by first name, last name, and company domain.</p>
+        <div class="code-block"><span class="comment"># Basic lookup</span>
+curl "<span class="url">https://backlink-finder.fly.dev/find?first_name=John&amp;last_name=Smith&amp;domain=example.com</span>"
+
+<span class="comment"># First call returns 402 with payment details.</span>
+<span class="comment"># With x402 client, payment is handled automatically:</span>
+
+<span class="comment"># Response:</span>
+{
+  <span class="key">"email"</span>: <span class="string">"john.smith@example.com"</span>,
+  <span class="key">"confidence"</span>: <span class="string">0.92</span>,
+  <span class="key">"first_name"</span>: <span class="string">"John"</span>,
+  <span class="key">"last_name"</span>: <span class="string">"Smith"</span>,
+  <span class="key">"title"</span>: <span class="string">"VP of Engineering"</span>,
+  <span class="key">"company"</span>: <span class="string">"Example Corp"</span>,
+  <span class="key">"domain"</span>: <span class="string">"example.com"</span>
+}</div>
+      </div>
+
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--muted)">PYTHON</span> &nbsp; x402 Client Example</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Use the x402 Python SDK for automatic payment handling.</p>
+        <div class="code-block"><span class="key">from</span> x402 <span class="key">import</span> x402ClientSync
+<span class="key">from</span> x402.mechanisms.evm.exact <span class="key">import</span> ExactEvmScheme
+<span class="key">from</span> x402.http.clients.requests <span class="key">import</span> x402_requests
+
+client = x402ClientSync()
+client.register(<span class="string">"eip155:8453"</span>, ExactEvmScheme(signer=account))
+session = x402_requests(client)
+
+<span class="comment"># Payment is handled automatically on 402 response</span>
+resp = session.get(<span class="string">"https://backlink-finder.fly.dev/find"</span>, params={
+    <span class="string">"first_name"</span>: <span class="string">"John"</span>,
+    <span class="string">"last_name"</span>: <span class="string">"Smith"</span>,
+    <span class="string">"domain"</span>: <span class="string">"example.com"</span>
+})
+print(resp.json()[<span class="string">"email"</span>])  <span class="comment"># john.smith@example.com</span></div>
+      </div>
+
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--muted)">DISCOVERY</span> &nbsp; Agent Integration</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:8px">AI agents discover pricing and payment details automatically.</p>
+        <div class="code-block">curl <span class="url">https://backlink-finder.fly.dev/.well-known/x402.json</span>
+
+<span class="comment"># Returns: payment network, wallet address, per-endpoint pricing</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="container">
+    <h2>Part of the Backlink Finder Suite</h2>
+    <p>Email enrichment works great alongside our backlink discovery API. Find link-building opportunities, then find the right person to contact.</p>
+    <div class="links">
+      <a href="/" class="secondary">Backlink Finder API</a>
+      <a href="#api" class="primary">View API Docs</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    Payments via <a href="https://x402.org">x402</a> protocol · USDC on <a href="https://base.org">Base</a>
+    <div class="back"><a href="/">← Back to Backlink Finder</a></div>
+  </div>
+</footer>
+
+<script>
+const resultsDiv = document.getElementById('results');
+const searchBtn = document.getElementById('search-btn');
+const firstNameInput = document.getElementById('first-name');
+const lastNameInput = document.getElementById('last-name');
+const domainInput = document.getElementById('domain');
+
+[firstNameInput, lastNameInput, domainInput].forEach(input => {
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
+});
+
+async function doLookup() {
+  const firstName = firstNameInput.value.trim();
+  const lastName = lastNameInput.value.trim();
+  const domain = domainInput.value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+  if (!firstName || !lastName || !domain) {
+    resultsDiv.className = 'results active';
+    resultsDiv.innerHTML = '<div class="container"><div class="error-msg">Please fill in all three fields.</div></div>';
+    return;
+  }
+
+  domainInput.value = domain;
+  searchBtn.disabled = true;
+  resultsDiv.className = 'results active';
+  resultsDiv.innerHTML = '<div class="container"><div class="status-msg"><span class="spinner"></span> Looking up <strong>' + esc(firstName) + ' ' + esc(lastName) + '</strong> at <strong>' + esc(domain) + '</strong>…</div></div>';
+
+  try {
+    const params = new URLSearchParams({ first_name: firstName, last_name: lastName, domain: domain });
+    const r = await fetch('/find?' + params.toString());
+
+    if (r.status === 402) {
+      resultsDiv.innerHTML = '<div class="container"><div class="result-card">' +
+        '<h3>Payment Required</h3>' +
+        '<p style="color:var(--muted);font-size:14px;margin-top:8px">This endpoint requires x402 payment ($0.05 USDC on Base).</p>' +
+        '<p style="color:var(--muted);font-size:14px;margin-top:8px">AI agents with the <a href="https://pypi.org/project/x402/">x402 SDK</a> handle this automatically. See the <a href="#api">API docs</a> for integration details.</p>' +
+        '</div></div>';
+    } else if (r.ok) {
+      const data = await r.json();
+      showResult(data);
+    } else {
+      const err = await r.text();
+      resultsDiv.innerHTML = '<div class="container"><div class="error-msg">' + esc(err) + '</div></div>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = '<div class="container"><div class="error-msg">Request failed: ' + esc(e.message) + '</div></div>';
+  }
+  searchBtn.disabled = false;
+}
+
+function showResult(data) {
+  const confScore = data.confidence;
+  let confLabel = '', confClass = '';
+  if (confScore >= 0.8) { confLabel = 'High'; confClass = 'confidence-high'; }
+  else if (confScore >= 0.5) { confLabel = 'Medium'; confClass = 'confidence-medium'; }
+  else if (confScore) { confLabel = 'Low'; confClass = 'confidence-low'; }
+
+  let html = '<div class="container"><div class="result-card"><h3>Result</h3>';
+
+  const rows = [
+    ['Email', data.email ? '<span class="email">' + esc(data.email) + '</span>' + (confLabel ? ' <span class="confidence ' + confClass + '">' + confLabel + ' (' + Math.round(confScore * 100) + '%)</span>' : '') : '<span style="color:var(--muted)">Not found</span>'],
+    ['Name', esc((data.first_name || '') + ' ' + (data.last_name || ''))],
+    ['Title', data.title ? esc(data.title) : '<span style="color:var(--muted)">—</span>'],
+    ['Company', data.company ? esc(data.company) : '<span style="color:var(--muted)">—</span>'],
+    ['Domain', esc(data.domain || '')]
+  ];
+
+  for (const [label, value] of rows) {
+    html += '<div class="result-row"><span class="result-label">' + label + '</span><span class="result-value">' + value + '</span></div>';
+  }
+
+  html += '</div></div>';
+  resultsDiv.innerHTML = html;
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+</script>
+</body>
+</html>

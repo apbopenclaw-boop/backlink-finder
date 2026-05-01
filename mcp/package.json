@@ -1,0 +1,25 @@
+{
+  "name": "backlink-finder-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Backlink Finder — discover backlinks to any domain. AI agents pay per query with USDC via x402.",
+  "type": "module",
+  "bin": {
+    "backlink-finder-mcp": "./index.mjs"
+  },
+  "main": "index.mjs",
+  "keywords": [
+    "mcp",
+    "backlinks",
+    "seo",
+    "x402",
+    "usdc",
+    "ai-agent"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "ethers": "^6.13.5",
+    "x402": "^1.2.0",
+    "zod": "^3.24.4"
+  }
+}
