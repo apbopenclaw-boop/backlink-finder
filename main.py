@@ -341,7 +341,7 @@ routes = {
 # Track in-progress crawls to prevent duplicate work
 _crawl_locks: dict[str, threading.Lock] = {}
 _MAX_CONCURRENT_CRAWLS = 3
-_active_crawls = 0
+_active_crawls = [0]
 _crawl_count_lock = threading.Lock()
 app.add_middleware(PaymentMiddlewareASGI, routes=routes, server=server)
 
@@ -809,7 +809,7 @@ async def get_backlinks(domain: str):
         con.close()
         # On-demand crawl — enforce global concurrency limit
         with _crawl_count_lock:
-            if _active_crawls >= _MAX_CONCURRENT_CRAWLS:
+            if _active_crawls[0] >= _MAX_CONCURRENT_CRAWLS:
                 raise HTTPException(
                     status_code=429,
                     detail=f"Too many crawls in progress ({_MAX_CONCURRENT_CRAWLS}). Try again later.",
@@ -820,16 +820,15 @@ async def get_backlinks(domain: str):
                 status_code=409,
                 detail=f"Crawl already in progress for {domain}. Try again in a few minutes.",
             )
-        global _active_crawls
         with _crawl_count_lock:
-            _active_crawls += 1
+            _active_crawls[0] += 1
         try:
             results, crawl_id = crawl_and_store(domain, DB_PATH)
         except Exception as e:
             raise HTTPException(status_code=502, detail=f"Crawl failed: {e}")
         finally:
             with _crawl_count_lock:
-                _active_crawls -= 1
+                _active_crawls[0] -= 1
             lock.release()
             _crawl_locks.pop(domain, None)
 
