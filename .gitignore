@@ -5,3 +5,10 @@ __pycache__/
 .venv/
 deploy.sh
 mcp/node_modules/
+backlinks-demo.db
+backlinks-demo.db
+healthcheck*.log
+healthcheck*.sh
+.test-wallet-*
+check_conversion.sh
+convert_parquet*.py
