@@ -51,6 +51,9 @@ app = FastAPI(
     title="Backlink Finder API",
     description="Find backlinks to any domain using Common Crawl data. Pay per query with USDC.",
     version="0.1.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 # ── x402 payment middleware ─────────────────────────────────────────
@@ -337,6 +340,9 @@ routes = {
 
 # Track in-progress crawls to prevent duplicate work
 _crawl_locks: dict[str, threading.Lock] = {}
+_MAX_CONCURRENT_CRAWLS = 3
+_active_crawls = 0
+_crawl_count_lock = threading.Lock()
 app.add_middleware(PaymentMiddlewareASGI, routes=routes, server=server)
 
 # Serve .well-known for agent discovery
@@ -494,29 +500,12 @@ async def health():
     return {"status": "ok", "service": "backlink-finder", "version": "0.1.0"}
 
 
-@app.get("/debug/x402")
-async def debug_x402():
-    """Show last facilitator request for debugging."""
-    # Also check facilitator URL and supported networks
-    import httpx as _httpx
-    fac_url = FACILITATOR_URL
-    supported = None
-    try:
-        headers = {"Content-Type": "application/json"}
-        if cdp_auth:
-            auth_headers = cdp_auth.get_auth_headers()
-            headers.update(auth_headers.supported)
-        async with _httpx.AsyncClient() as client:
-            resp = await client.get(f"{fac_url}/supported", headers=headers, timeout=10)
-            supported = {"status": resp.status_code, "body": resp.text[:500]}
-    except Exception as e:
-        supported = {"error": str(e)}
-    return JSONResponse({**_last_debug, "facilitator_url": fac_url, "supported": supported})
+# /debug/x402 removed — exposed facilitator URL and request state
 
 
-@app.get("/debug/storage")
-async def debug_storage():
-    """Diagnostic: show what data files exist on the volume."""
+# /debug/storage removed — exposed filesystem layout and data sizes
+async def _debug_storage_disabled():
+    """Removed: exposed filesystem layout."""
     import glob
     from crawler import PARQUET_DIR, CACHE_DIR, _parquet_available
     parquet_dir = PARQUET_DIR
@@ -818,18 +807,29 @@ async def get_backlinks(domain: str):
 
     if not row:
         con.close()
-        # On-demand crawl
+        # On-demand crawl — enforce global concurrency limit
+        with _crawl_count_lock:
+            if _active_crawls >= _MAX_CONCURRENT_CRAWLS:
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Too many crawls in progress ({_MAX_CONCURRENT_CRAWLS}). Try again later.",
+                )
         lock = _crawl_locks.setdefault(domain, threading.Lock())
         if not lock.acquire(blocking=False):
             raise HTTPException(
                 status_code=409,
                 detail=f"Crawl already in progress for {domain}. Try again in a few minutes.",
             )
+        global _active_crawls
+        with _crawl_count_lock:
+            _active_crawls += 1
         try:
             results, crawl_id = crawl_and_store(domain, DB_PATH)
         except Exception as e:
             raise HTTPException(status_code=502, detail=f"Crawl failed: {e}")
         finally:
+            with _crawl_count_lock:
+                _active_crawls -= 1
             lock.release()
             _crawl_locks.pop(domain, None)
 
