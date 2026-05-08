@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>bhrefs — SEO Tools for AI Agents</title>
 <meta name="description" content="A suite of SEO tools built for AI agents. Backlinks, rankings, site audits — pay per query with USDC. No API keys, no subscriptions.">
-<link rel="canonical" href="https://bhrefs.com">
+<link rel="canonical" href="https://bhrefs.com/">
+<meta name="robots" content="index, follow">
+<meta name="author" content="bhrefs">
+<meta name="theme-color" content="#004038">
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 
 <!-- Open Graph -->
@@ -26,6 +29,15 @@
 <!-- Structured Data -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"bhrefs","url":"https://bhrefs.com","description":"A suite of SEO tools built for AI agents. Pay per query with USDC via x402 protocol.","applicationCategory":"SEO Tool","operatingSystem":"Web","offers":{"@type":"AggregateOffer","lowPrice":"0.05","highPrice":"0.15","priceCurrency":"USD","description":"Per-query pricing via USDC micropayments"}}
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"What is bhrefs?","acceptedAnswer":{"@type":"Answer","text":"bhrefs is a suite of SEO tools built specifically for AI agents. Tools include backlink discovery, gap analysis, and more — all accessible via API with pay-per-query USDC micropayments through the x402 protocol."}},
+{"@type":"Question","name":"How do AI agents use bhrefs?","acceptedAnswer":{"@type":"Answer","text":"AI agents make standard HTTP requests to bhrefs API endpoints. The API returns a 402 status with payment details. The agent pays with USDC on the Base network, and receives SEO data in the same request cycle. No API keys or accounts needed."}},
+{"@type":"Question","name":"What is the x402 payment protocol?","acceptedAnswer":{"@type":"Answer","text":"x402 is an open protocol that lets AI agents pay for API access using cryptocurrency micropayments. When an agent hits a paid endpoint, it receives a 402 Payment Required response with pricing details, pays with USDC, and gets the data — all programmatically."}},
+{"@type":"Question","name":"How much does bhrefs cost?","acceptedAnswer":{"@type":"Answer","text":"bhrefs uses pay-per-query pricing with no subscriptions. Backlink lookups cost $0.10 USDC, gap analysis costs $0.15 USDC, and preview lookups are free. Payments are made in USDC on the Base network with sub-cent gas fees."}},
+{"@type":"Question","name":"What backlink data does bhrefs provide?","acceptedAnswer":{"@type":"Answer","text":"bhrefs Backlink Finder scans billions of hyperlinks from the Common Crawl web archive to identify every domain linking to your target. Data includes linking domains, host counts, and authority scores. On-demand crawling is available for domains not yet cached."}}
+]}
 </script>
 
 <!-- Plausible Analytics -->
@@ -305,6 +317,39 @@ footer a{color:var(--muted)}footer a:hover{color:var(--text)}
         <tr><td class="endpoint">/health</td><td>Service status</td><td class="price-val free">Free</td></tr>
       </tbody>
     </table>
+  </div>
+</section>
+
+
+<section class="faq" id="faq" style="padding:64px 0;border-top:1px solid var(--border)">
+  <div class="container">
+    <h2 style="font-size:22px;font-weight:600;text-align:center;margin-bottom:32px">Frequently Asked Questions</h2>
+    <div style="max-width:700px;margin:0 auto">
+      <details style="border-bottom:1px solid var(--border);padding:16px 0">
+        <summary style="font-weight:600;font-size:15px;cursor:pointer;list-style:none">What is bhrefs?</summary>
+        <p style="color:var(--muted);font-size:14px;margin-top:8px">bhrefs is a suite of SEO tools built specifically for AI agents. Tools include backlink discovery, gap analysis, and more — all accessible via API with pay-per-query USDC micropayments through the x402 protocol. No API keys, no accounts, no subscriptions.</p>
+      </details>
+      <details style="border-bottom:1px solid var(--border);padding:16px 0">
+        <summary style="font-weight:600;font-size:15px;cursor:pointer;list-style:none">How do AI agents use bhrefs?</summary>
+        <p style="color:var(--muted);font-size:14px;margin-top:8px">AI agents make standard HTTP requests to bhrefs API endpoints. The API returns a 402 status with payment details. The agent pays with USDC on the Base network, and receives SEO data in the same request cycle — fully autonomous.</p>
+      </details>
+      <details style="border-bottom:1px solid var(--border);padding:16px 0">
+        <summary style="font-weight:600;font-size:15px;cursor:pointer;list-style:none">What is the x402 payment protocol?</summary>
+        <p style="color:var(--muted);font-size:14px;margin-top:8px">x402 is an open protocol that lets AI agents pay for API access using cryptocurrency micropayments. When an agent hits a paid endpoint, it receives a 402 Payment Required response with pricing, pays with USDC, and gets data — all programmatically.</p>
+      </details>
+      <details style="border-bottom:1px solid var(--border);padding:16px 0">
+        <summary style="font-weight:600;font-size:15px;cursor:pointer;list-style:none">How much does bhrefs cost?</summary>
+        <p style="color:var(--muted);font-size:14px;margin-top:8px">Pay-per-query with no subscriptions. Backlink lookups: $0.10 USDC. Gap analysis: $0.15 USDC. Preview lookups: free. Payments in USDC on the Base network with sub-cent gas fees.</p>
+      </details>
+      <details style="border-bottom:1px solid var(--border);padding:16px 0">
+        <summary style="font-weight:600;font-size:15px;cursor:pointer;list-style:none">What backlink data does bhrefs provide?</summary>
+        <p style="color:var(--muted);font-size:14px;margin-top:8px">bhrefs Backlink Finder scans billions of hyperlinks from the Common Crawl web archive. Data includes linking domains, host counts, and authority scores. On-demand crawling available for uncached domains (2–5 minutes).</p>
+      </details>
+      <details style="border-bottom:1px solid var(--border);padding:16px 0">
+        <summary style="font-weight:600;font-size:15px;cursor:pointer;list-style:none">Do I need an API key to use bhrefs?</summary>
+        <p style="color:var(--muted);font-size:14px;margin-top:8px">No. bhrefs is completely anonymous — no accounts, no API keys, no registration. Any AI agent with a USDC wallet on Base can query instantly. Free endpoints require nothing at all.</p>
+      </details>
+    </div>
   </div>
 </section>
 

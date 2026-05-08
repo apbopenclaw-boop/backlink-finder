@@ -464,7 +464,7 @@ async def robots_txt():
         "User-agent: Google-Extended\n"
         "Allow: /\n"
         "\n"
-        "Sitemap: https://backlink-finder.fly.dev/sitemap.xml\n",
+        "Sitemap: https://bhrefs.com/sitemap.xml\n",
         media_type="text/plain",
     )
 
@@ -481,9 +481,9 @@ async def root(request: Request):
     if "text/html" in accept:
         return FileResponse("static/index.html")
     return {
-        "service": "Backlink Finder API",
+        "service": "bhrefs — SEO Tools for AI Agents",
         "version": "0.1.0",
-        "description": "Find backlinks to any domain using Common Crawl data. Pay per query with USDC.",
+        "description": "SEO tools built for AI agents. Pay per query with USDC via x402.",
         "endpoints": {
             "/domains": "List available domains (free)",
             "/backlinks/{domain}": "Get all backlinks ($0.10 USDC)",
@@ -494,6 +494,26 @@ async def root(request: Request):
         "payment": "x402 protocol — USDC on Base network",
     }
 
+
+
+@app.get("/sitemap.xml")
+async def sitemap_xml():
+    """Sitemap for search engines."""
+    from fastapi.responses import Response
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://bhrefs.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://bhrefs.com/enrichment</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+</urlset>"""
+    return Response(content=xml, media_type="application/xml")
 
 @app.get("/health")
 async def health():
