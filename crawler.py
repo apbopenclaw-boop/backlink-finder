@@ -19,7 +19,7 @@ CACHE_DIR = os.getenv("CC_CACHE_DIR", "/data/cc-cache")
 PARQUET_DIR = os.getenv("CC_PARQUET_DIR", "/data/cc-parquet")
 
 DOMAIN_RE = re.compile(
-    r"^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?)*$"
+    r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)+$"
 )
 
 

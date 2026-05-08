@@ -25,24 +25,11 @@ def test_valid_domains_normalized(crawler_module, inp, expected):
     "http://example.com",
     "example.com/path",
     "example.com:8080",
-    "a" * 254,  # exceeds 253-char overall limit
+    "a" * 254,                # exceeds 253-char overall limit
+    "no-tld",                 # single-label (no dot) — RFC 1035 requires a TLD
+    "x" * 64 + ".com",        # label exceeds 63 chars per RFC 1035
 ])
 def test_invalid_domains_rejected(crawler_module, inp):
-    with pytest.raises(ValueError):
-        crawler_module.validate_domain(inp)
-
-
-@pytest.mark.parametrize("inp", [
-    "no-tld",                # single-label (no dot)
-    "x" * 64 + ".com",       # label exceeds 63 chars (RFC 1035)
-])
-@pytest.mark.xfail(reason="DOMAIN_RE accepts these; not currently enforced", strict=True)
-def test_known_validation_gaps(crawler_module, inp):
-    """Documents inputs the regex accepts that arguably shouldn't be valid.
-
-    Marked xfail+strict so this fails loudly if validate_domain ever gets
-    tightened, prompting the test to be moved to test_invalid_domains_rejected.
-    """
     with pytest.raises(ValueError):
         crawler_module.validate_domain(inp)
 
@@ -58,3 +45,10 @@ def test_max_length_boundary(crawler_module):
     over = "a" * 254
     with pytest.raises(ValueError):
         crawler_module.validate_domain(over)
+
+
+def test_label_length_boundary(crawler_module):
+    # 63-char label should pass; 64-char label should fail (RFC 1035)
+    crawler_module.validate_domain("x" * 63 + ".com")  # no raise
+    with pytest.raises(ValueError):
+        crawler_module.validate_domain("x" * 64 + ".com")
