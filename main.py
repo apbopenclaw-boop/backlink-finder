@@ -41,6 +41,7 @@ DB_PATH = os.getenv("DB_PATH", "/data/backlinks.db")
 APOLLO_API_KEY = os.getenv("APOLLO_API_KEY", "")
 EMAIL_DB_PATH = os.getenv("EMAIL_DB_PATH", "/data/email_finder.db")
 MONTHLY_LIMIT = int(os.getenv("MONTHLY_LIMIT", "500"))
+PER_PAYER_MONTHLY_LIMIT = int(os.getenv("PER_PAYER_MONTHLY_LIMIT", "100"))
 
 if not EVM_ADDRESS:
     raise ValueError("Set EVM_ADDRESS in .env")
@@ -651,6 +652,12 @@ def _init_email_db():
             month TEXT PRIMARY KEY, count INTEGER DEFAULT 0
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS monthly_usage_by_payer (
+            month TEXT, payer TEXT, count INTEGER DEFAULT 0,
+            PRIMARY KEY (month, payer)
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -681,6 +688,45 @@ def _increment_monthly_count():
     db.execute(
         "INSERT INTO monthly_usage (month, count) VALUES (?, 1) ON CONFLICT(month) DO UPDATE SET count = count + 1",
         (_current_month(),),
+    )
+    db.commit()
+    db.close()
+
+
+def _get_payer_address(request: Request) -> str | None:
+    """Extract the verified payer's wallet address from the x402 middleware.
+
+    The middleware sets request.state.payment_payload after a successful
+    verification; for the EVM exact scheme the payer is at
+    payload["authorization"]["from"].
+    """
+    pp = getattr(request.state, "payment_payload", None)
+    if pp is None:
+        return None
+    payload = getattr(pp, "payload", None) or (pp.get("payload") if isinstance(pp, dict) else None)
+    if not isinstance(payload, dict):
+        return None
+    auth = payload.get("authorization") or {}
+    addr = auth.get("from") or ""
+    return addr.lower() or None
+
+
+def _get_payer_monthly_count(payer: str) -> int:
+    db = _email_db()
+    row = db.execute(
+        "SELECT count FROM monthly_usage_by_payer WHERE month = ? AND payer = ?",
+        (_current_month(), payer),
+    ).fetchone()
+    db.close()
+    return row["count"] if row else 0
+
+
+def _increment_payer_monthly_count(payer: str):
+    db = _email_db()
+    db.execute(
+        "INSERT INTO monthly_usage_by_payer (month, payer, count) VALUES (?, ?, 1) "
+        "ON CONFLICT(month, payer) DO UPDATE SET count = count + 1",
+        (_current_month(), payer),
     )
     db.commit()
     db.close()
@@ -730,17 +776,24 @@ async def _apollo_people_match(first_name: str, last_name: str, domain: str) -> 
 
 @app.get("/find")
 async def find_email(
+    request: Request,
     first_name: str = Query(..., description="Person's first name"),
     last_name: str = Query(..., description="Person's last name"),
     domain: str = Query(..., description="Company domain (e.g. acme.com)"),
 ):
-    """Find a verified business email. Costs $0.01 USDC."""
+    """Find a verified business email. Costs $0.05 USDC."""
     if not APOLLO_API_KEY:
         raise HTTPException(status_code=503, detail="Email finder not configured")
 
-    usage = _get_monthly_count()
-    if usage >= MONTHLY_LIMIT:
+    if _get_monthly_count() >= MONTHLY_LIMIT:
         raise HTTPException(status_code=429, detail=f"Monthly limit of {MONTHLY_LIMIT} lookups reached. Resets on the 1st.")
+
+    payer = _get_payer_address(request)
+    if payer and _get_payer_monthly_count(payer) >= PER_PAYER_MONTHLY_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Per-wallet monthly limit of {PER_PAYER_MONTHLY_LIMIT} lookups reached. Resets on the 1st.",
+        )
 
     cached = _check_email_cache(first_name, last_name, domain)
     if cached:
@@ -760,6 +813,8 @@ async def find_email(
     if email:
         _save_email_lookup(first_name, last_name, domain, email, result["confidence"], result["title"], result["company"])
     _increment_monthly_count()
+    if payer:
+        _increment_payer_monthly_count(payer)
 
     return {
         "email": email, "email_found": bool(email),
