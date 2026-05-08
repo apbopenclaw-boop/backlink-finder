@@ -106,23 +106,13 @@ def _v2_requirements_to_v1(req_dict: dict) -> dict:
         v1["outputSchema"] = bazaar["info"]
     return v1
 
-_last_debug = {"request": None, "error": None, "result": None}
 _orig_verify = facilitator._verify_http
 _orig_settle = facilitator._settle_http
 
 async def _v1_verify(version, payload_dict, requirements_dict):
     v1_payload = _v2_payload_to_v1(payload_dict)
     v1_reqs = _v2_requirements_to_v1(requirements_dict)
-    body = facilitator._build_request_body(1, v1_payload, v1_reqs)
-    _last_debug["request"] = body
-    try:
-        result = await _orig_verify(1, v1_payload, v1_reqs)
-        _last_debug["result"] = "OK"
-        _last_debug["error"] = None
-        return result
-    except Exception as e:
-        _last_debug["error"] = str(e)
-        raise
+    return await _orig_verify(1, v1_payload, v1_reqs)
 
 async def _v1_settle(version, payload_dict, requirements_dict):
     v1_payload = _v2_payload_to_v1(payload_dict)
