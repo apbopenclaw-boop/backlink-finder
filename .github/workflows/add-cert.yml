@@ -1,0 +1,20 @@
+name: Add Custom Domain Certificate
+on:
+  workflow_dispatch:
+
+jobs:
+  add-cert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Fly CLI
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Add bhrefs.com certificate
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl certs add bhrefs.com --app backlink-finder
+          flyctl certs add www.bhrefs.com --app backlink-finder
+          echo "---"
+          flyctl certs show bhrefs.com --app backlink-finder
+          flyctl certs show www.bhrefs.com --app backlink-finder
