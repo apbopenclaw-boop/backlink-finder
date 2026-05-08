@@ -733,13 +733,19 @@ def _increment_payer_monthly_count(payer: str):
 
 
 def _check_email_cache(first_name: str, last_name: str, domain: str) -> dict | None:
+    """Return the cached row if we've ever queried this person+domain, else None.
+
+    The row may represent a positive (email present), a negative-with-person
+    (Apollo found a person but no email — company/title populated), or a
+    negative-no-person (all fields empty). The caller decides how to respond.
+    """
     db = _email_db()
     row = db.execute(
         "SELECT email, confidence, title, company FROM lookups WHERE lower(first_name)=? AND lower(last_name)=? AND lower(domain)=?",
         (first_name.lower(), last_name.lower(), domain.lower()),
     ).fetchone()
     db.close()
-    return dict(row) if row and row["email"] else None
+    return dict(row) if row else None
 
 
 def _save_email_lookup(first_name, last_name, domain, email, confidence, title, company):
@@ -763,7 +769,7 @@ async def _apollo_people_match(first_name: str, last_name: str, domain: str) -> 
             return {"error": f"Apollo returned {resp.status_code}"}
         person = resp.json().get("person")
         if not person:
-            return {"error": "No match found"}
+            return {"error": "No match found", "definitive": True}
         return {
             "email": person.get("email", ""),
             "confidence": "high" if person.get("email_status") == "verified" else person.get("email_status", "unknown"),
@@ -796,22 +802,37 @@ async def find_email(
         )
 
     cached = _check_email_cache(first_name, last_name, domain)
-    if cached:
-        return {
-            "email": cached["email"], "email_found": True,
-            "confidence": cached["confidence"],
-            "first_name": first_name, "last_name": last_name,
-            "title": cached["title"], "company": cached["company"],
-            "domain": domain, "cached": True,
-        }
+    if cached is not None:
+        if cached["email"]:
+            return {
+                "email": cached["email"], "email_found": True,
+                "confidence": cached["confidence"],
+                "first_name": first_name, "last_name": last_name,
+                "title": cached["title"], "company": cached["company"],
+                "domain": domain, "cached": True,
+            }
+        if cached["company"] or cached["title"]:
+            return {
+                "email": None, "email_found": False,
+                "confidence": "unavailable",
+                "first_name": first_name, "last_name": last_name,
+                "title": cached["title"] or "", "company": cached["company"] or "",
+                "domain": domain, "cached": True,
+            }
+        raise HTTPException(status_code=404, detail="No match found")
 
     result = await _apollo_people_match(first_name, last_name, domain)
     if "error" in result:
+        if result.get("definitive"):
+            _save_email_lookup(first_name, last_name, domain, "", "", "", "")
         raise HTTPException(status_code=404, detail=result["error"])
 
     email = result["email"] or None
-    if email:
-        _save_email_lookup(first_name, last_name, domain, email, result["confidence"], result["title"], result["company"])
+    _save_email_lookup(
+        first_name, last_name, domain,
+        email or "", result["confidence"] if email else "",
+        result["title"], result["company"],
+    )
     _increment_monthly_count()
     if payer:
         _increment_payer_monthly_count(payer)
