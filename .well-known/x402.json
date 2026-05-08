@@ -1,0 +1,169 @@
+{
+  "x402Version": 2,
+  "service": {
+    "id": "backlink-finder",
+    "name": "Backlink Finder",
+    "description": "Backlink discovery API for AI agents. Find every domain linking to any target using web-scale Common Crawl data, plus competitive gap analysis and verified email enrichment. Pay per query with USDC — no API keys, no accounts.",
+    "category": "data",
+    "website": "https://backlink-finder.fly.dev",
+    "documentation": "https://backlink-finder.fly.dev/llms.txt",
+    "servicesManifest": "https://backlink-finder.fly.dev/services.json"
+  },
+  "payment": {
+    "schemes": ["exact"],
+    "networks": ["eip155:8453"],
+    "asset": {
+      "symbol": "USDC",
+      "decimals": 6,
+      "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "chain": "Base"
+    },
+    "payTo": "0x2D8cFC122D13971EEf8cfB4CBC047F527eB76FAd",
+    "facilitator": "https://x402.org/facilitator"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/backlinks/{domain}",
+      "description": "Get all backlinks for any domain. Crawls on-demand from Common Crawl if not cached (may take 2-5 min for new domains).",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC",
+          "amount": "100000",
+          "amountDisplay": "$0.10",
+          "payTo": "0x2D8cFC122D13971EEf8cfB4CBC047F527eB76FAd"
+        }
+      ],
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "pathParams": {
+          "domain": "example.com"
+        }
+      },
+      "output": {
+        "type": "json",
+        "example": {
+          "domain": "example.com",
+          "backlink_count": 142,
+          "backlinks": [
+            {"linking_domain": "github.com", "num_hosts": 6038, "authority_score": 57}
+          ]
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/gap",
+      "description": "Gap analysis: find domains linking to a competitor but not to you.",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC",
+          "amount": "150000",
+          "amountDisplay": "$0.15",
+          "payTo": "0x2D8cFC122D13971EEf8cfB4CBC047F527eB76FAd"
+        }
+      ],
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "queryParams": {
+          "yours": "mysite.com",
+          "competitor": "competitor.com"
+        }
+      },
+      "output": {
+        "type": "json",
+        "example": {
+          "gap_count": 847,
+          "opportunities": [
+            {"domain": "techcrunch.com", "authority_score": 89}
+          ]
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/find",
+      "description": "Find a verified business email for a person given their first name, last name, and company domain.",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC",
+          "amount": "50000",
+          "amountDisplay": "$0.05",
+          "payTo": "0x2D8cFC122D13971EEf8cfB4CBC047F527eB76FAd"
+        }
+      ],
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "queryParams": {
+          "first_name": "John",
+          "last_name": "Smith",
+          "domain": "acme.com"
+        }
+      },
+      "output": {
+        "type": "json",
+        "example": {
+          "email": "john.smith@acme.com",
+          "confidence": 0.92,
+          "first_name": "John",
+          "last_name": "Smith",
+          "title": "VP Engineering",
+          "company": "Acme Corp",
+          "domain": "acme.com"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/preview/{domain}",
+      "description": "Free preview of the top 5 backlinks for any cached domain.",
+      "accepts": [],
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "pathParams": {
+          "domain": "example.com"
+        }
+      },
+      "output": {
+        "type": "json"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/domains",
+      "description": "List all cached domains with their backlink counts.",
+      "accepts": [],
+      "input": {
+        "type": "http",
+        "method": "GET"
+      },
+      "output": {
+        "type": "json"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "description": "Service health check.",
+      "accepts": [],
+      "input": {
+        "type": "http",
+        "method": "GET"
+      },
+      "output": {
+        "type": "json",
+        "example": {"status": "ok", "service": "backlink-finder", "version": "0.1.0"}
+      }
+    }
+  ]
+}
