@@ -11,7 +11,6 @@ RUN uv pip install --system "fastapi>=0.115" "uvicorn>=0.34" "x402[fastapi,evm]>
 
 # Copy application
 COPY main.py crawler.py cdp_auth.py convert_parquet_prod.py entrypoint.sh ./
-COPY .well-known .well-known
 COPY static static
 
 # Seed DB baked into image (copied to volume on first run)

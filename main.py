@@ -134,209 +134,168 @@ facilitator._settle_http = _v1_settle
 server = x402ResourceServer(facilitator)
 server.register(EVM_NETWORK, ExactEvmServerScheme())
 
-routes = {
-    "GET /backlinks/*": RouteConfig(
-        accepts=[
-            PaymentOption(
-                scheme="exact",
-                pay_to=EVM_ADDRESS,
-                price="$0.10",
-                network=EVM_NETWORK,
-            ),
-        ],
-        mime_type="application/json",
-        description="Get all backlinks for any domain. Crawls on-demand from Common Crawl if not cached (may take 2-5 min for new domains).",
-        extensions={
-            "bazaar": {
-                "info": {
-                    "input": {
-                        "type": "http",
-                        "method": "GET",
-                        "queryParams": {
-                            "domain": "example.com"
-                        },
-                    },
-                    "output": {
-                        "type": "json",
-                        "example": {
-                            "domain": "example.com",
-                            "backlink_count": 142,
-                            "backlinks": [{"linking_domain": "github.com", "num_hosts": 6038, "authority_score": 57}],
-                        },
+# Single source of truth for endpoint metadata.
+# Used to build the x402 middleware routes, /services.json, /.well-known/x402.json,
+# and /llms.txt — keeping prices, paths, and descriptions in lockstep.
+def _input_schema(query_params: dict[str, str], required: list[str] | None = None) -> dict:
+    """Build a bazaar-extension JSON schema for an http GET endpoint."""
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+            "input": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "const": "http"},
+                    "method": {"type": "string", "enum": ["GET"]},
+                    "queryParams": {
+                        "type": "object",
+                        "properties": {k: {"type": "string"} for k in query_params},
+                        "required": required if required is not None else list(query_params),
                     },
                 },
-                "schema": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "type": "object",
-                    "properties": {
+                "required": ["type", "method"],
+                "additionalProperties": False,
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string"},
+                    "example": {"type": "object"},
+                },
+                "required": ["type"],
+            },
+        },
+        "required": ["input"],
+    }
+
+
+ENDPOINT_CATALOG: list[dict] = [
+    {
+        "method": "GET",
+        "path": "/backlinks/{domain}",
+        "route_pattern": "GET /backlinks/*",
+        "description": "Get all backlinks for any domain. Crawls on-demand from Common Crawl if not cached (may take 2-5 min for new domains).",
+        "price_usd": "$0.10",
+        "amount_atomic": "100000",
+        "query_params": {"domain": "example.com"},
+        "output_example": {
+            "domain": "example.com",
+            "backlink_count": 142,
+            "backlinks": [{"linking_domain": "github.com", "num_hosts": 6038, "authority_score": 57}],
+        },
+    },
+    {
+        "method": "GET",
+        "path": "/find",
+        "route_pattern": "GET /find",
+        "description": "Find a verified business email for a person given their name and company domain.",
+        "price_usd": "$0.05",
+        "amount_atomic": "50000",
+        "query_params": {"first_name": "John", "last_name": "Smith", "domain": "acme.com"},
+        "output_example": {
+            "email": "john.smith@acme.com",
+            "confidence": 0.92,
+            "first_name": "John",
+            "last_name": "Smith",
+            "title": "VP Engineering",
+            "company": "Acme Corp",
+            "domain": "acme.com",
+        },
+    },
+    {
+        "method": "GET",
+        "path": "/gap",
+        "route_pattern": "GET /gap",
+        "description": "Gap analysis: find domains linking to competitor but not to you.",
+        "price_usd": "$0.15",
+        "amount_atomic": "150000",
+        "query_params": {"yours": "mysite.com", "competitor": "competitor.com"},
+        "output_example": {
+            "gap_count": 847,
+            "opportunities": [{"domain": "techcrunch.com", "authority_score": 89}],
+        },
+    },
+    {
+        "method": "GET",
+        "path": "/preview/{domain}",
+        "route_pattern": None,
+        "description": "Free preview of the top 5 backlinks for any cached domain.",
+        "price_usd": None,
+        "amount_atomic": None,
+        "query_params": {},
+        "output_example": None,
+    },
+    {
+        "method": "GET",
+        "path": "/domains",
+        "route_pattern": None,
+        "description": "List all cached domains with their backlink counts.",
+        "price_usd": None,
+        "amount_atomic": None,
+        "query_params": {},
+        "output_example": None,
+    },
+    {
+        "method": "GET",
+        "path": "/health",
+        "route_pattern": None,
+        "description": "Service health check.",
+        "price_usd": None,
+        "amount_atomic": None,
+        "query_params": {},
+        "output_example": {"status": "ok", "service": "backlink-finder", "version": "0.1.0"},
+    },
+    {
+        "method": "GET",
+        "path": "/parquet-status",
+        "route_pattern": None,
+        "description": "Parquet conversion / data-freshness status.",
+        "price_usd": None,
+        "amount_atomic": None,
+        "query_params": {},
+        "output_example": None,
+    },
+]
+
+
+def _build_paid_routes(catalog: list[dict]) -> dict[str, RouteConfig]:
+    """Build the x402 PaymentMiddlewareASGI routes dict from the catalog."""
+    return {
+        e["route_pattern"]: RouteConfig(
+            accepts=[
+                PaymentOption(
+                    scheme="exact",
+                    pay_to=EVM_ADDRESS,
+                    price=e["price_usd"],
+                    network=EVM_NETWORK,
+                ),
+            ],
+            mime_type="application/json",
+            description=e["description"],
+            extensions={
+                "bazaar": {
+                    "info": {
                         "input": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string", "const": "http"},
-                                "method": {"type": "string", "enum": ["GET"]},
-                                "queryParams": {
-                                    "type": "object",
-                                    "properties": {
-                                        "domain": {"type": "string", "description": "Target domain"}
-                                    },
-                                    "required": ["domain"],
-                                },
-                            },
-                            "required": ["type", "method"],
-                            "additionalProperties": False,
+                            "type": "http",
+                            "method": "GET",
+                            "queryParams": e["query_params"],
                         },
                         "output": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string"},
-                                "example": {"type": "object"},
-                            },
-                            "required": ["type"],
+                            "type": "json",
+                            "example": e["output_example"],
                         },
                     },
-                    "required": ["input"],
-                },
-            }
-        },
-    ),
-    "GET /find": RouteConfig(
-        accepts=[
-            PaymentOption(
-                scheme="exact",
-                pay_to=EVM_ADDRESS,
-                price="$0.05",
-                network=EVM_NETWORK,
-            ),
-        ],
-        mime_type="application/json",
-        description="Find a verified business email for a person given their name and company domain.",
-        extensions={
-            "bazaar": {
-                "info": {
-                    "input": {
-                        "type": "http",
-                        "method": "GET",
-                        "queryParams": {
-                            "first_name": "John",
-                            "last_name": "Smith",
-                            "domain": "acme.com",
-                        },
-                    },
-                    "output": {
-                        "type": "json",
-                        "example": {
-                            "email": "john.smith@acme.com",
-                            "confidence": 0.92,
-                            "first_name": "John",
-                            "last_name": "Smith",
-                            "title": "VP Engineering",
-                            "company": "Acme Corp",
-                            "domain": "acme.com",
-                        },
-                    },
-                },
-                "schema": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "type": "object",
-                    "properties": {
-                        "input": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string", "const": "http"},
-                                "method": {"type": "string", "enum": ["GET"]},
-                                "queryParams": {
-                                    "type": "object",
-                                    "properties": {
-                                        "first_name": {"type": "string"},
-                                        "last_name": {"type": "string"},
-                                        "domain": {"type": "string"},
-                                    },
-                                    "required": ["first_name", "last_name", "domain"],
-                                },
-                            },
-                            "required": ["type", "method"],
-                            "additionalProperties": False,
-                        },
-                        "output": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string"},
-                                "example": {"type": "object"},
-                            },
-                            "required": ["type"],
-                        },
-                    },
-                    "required": ["input"],
-                },
-            }
-        },
-    ),
-    "GET /gap": RouteConfig(
-        accepts=[
-            PaymentOption(
-                scheme="exact",
-                pay_to=EVM_ADDRESS,
-                price="$0.15",
-                network=EVM_NETWORK,
-            ),
-        ],
-        mime_type="application/json",
-        description="Gap analysis: find domains linking to competitor but not to you",
-        extensions={
-            "bazaar": {
-                "info": {
-                    "input": {
-                        "type": "http",
-                        "method": "GET",
-                        "queryParams": {
-                            "yours": "mysite.com",
-                            "competitor": "competitor.com",
-                        },
-                    },
-                    "output": {
-                        "type": "json",
-                        "example": {
-                            "gap_count": 847,
-                            "opportunities": [{"domain": "techcrunch.com", "authority_score": 89}],
-                        },
-                    },
-                },
-                "schema": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "type": "object",
-                    "properties": {
-                        "input": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string", "const": "http"},
-                                "method": {"type": "string", "enum": ["GET"]},
-                                "queryParams": {
-                                    "type": "object",
-                                    "properties": {
-                                        "yours": {"type": "string"},
-                                        "competitor": {"type": "string"},
-                                    },
-                                    "required": ["yours", "competitor"],
-                                },
-                            },
-                            "required": ["type", "method"],
-                            "additionalProperties": False,
-                        },
-                        "output": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string"},
-                                "example": {"type": "object"},
-                            },
-                            "required": ["type"],
-                        },
-                    },
-                    "required": ["input"],
-                },
-            }
-        },
-    ),
-}
+                    "schema": _input_schema(e["query_params"]),
+                }
+            },
+        )
+        for e in catalog
+        if e["route_pattern"] is not None
+    }
+
+
+routes = _build_paid_routes(ENDPOINT_CATALOG)
 
 # Track in-progress crawls to prevent duplicate work
 _crawl_locks: dict[str, threading.Lock] = {}
@@ -344,9 +303,6 @@ _MAX_CONCURRENT_CRAWLS = 3
 _active_crawls = [0]
 _crawl_count_lock = threading.Lock()
 app.add_middleware(PaymentMiddlewareASGI, routes=routes, server=server)
-
-# Serve .well-known for agent discovery
-app.mount("/.well-known", StaticFiles(directory=".well-known"), name="well-known")
 
 # Serve static assets (OG image, etc.)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -372,44 +328,74 @@ async def services_manifest():
         "description": "Backlink discovery API for AI agents. Find every domain linking to any target using web-scale crawl data.",
         "category": "data",
         "x402Version": 2,
-        "networks": [EVM_NETWORK.split(":")[0] + ":" + EVM_NETWORK.split(":")[1]],
+        "networks": [EVM_NETWORK],
         "website": "https://backlink-finder.fly.dev",
         "endpoints": [
             {
-                "method": "GET",
-                "path": "/backlinks/{domain}",
-                "description": "Get all backlinks for any domain. Crawls on-demand if not cached.",
-                "price": "$0.10",
+                "method": e["method"],
+                "path": e["path"],
+                "description": e["description"],
+                "price": e["price_usd"] or "$0.00",
                 "currency": "USDC",
+            }
+            for e in ENDPOINT_CATALOG
+        ],
+    }
+
+
+@app.get("/.well-known/x402.json")
+async def x402_manifest():
+    """x402 agent discovery manifest, generated from the endpoint catalog."""
+    return {
+        "x402Version": 2,
+        "service": {
+            "id": "backlink-finder",
+            "name": "Backlink Finder",
+            "description": "Backlink discovery API for AI agents. Find every domain linking to any target using web-scale Common Crawl data, plus competitive gap analysis and verified email enrichment. Pay per query with USDC — no API keys, no accounts.",
+            "category": "data",
+            "website": "https://backlink-finder.fly.dev",
+            "documentation": "https://backlink-finder.fly.dev/llms.txt",
+            "servicesManifest": "https://backlink-finder.fly.dev/services.json",
+        },
+        "payment": {
+            "schemes": ["exact"],
+            "networks": [EVM_NETWORK],
+            "asset": {
+                "symbol": "USDC",
+                "decimals": 6,
+                "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "chain": "Base",
             },
+            "payTo": EVM_ADDRESS,
+            "facilitator": FACILITATOR_URL,
+        },
+        "endpoints": [
             {
-                "method": "GET",
-                "path": "/gap",
-                "description": "Gap analysis: find domains linking to competitor but not to you.",
-                "price": "$0.15",
-                "currency": "USDC",
-            },
-            {
-                "method": "GET",
-                "path": "/preview/{domain}",
-                "description": "Free preview: top 5 backlinks for any cached domain.",
-                "price": "$0.00",
-                "currency": "USDC",
-            },
-            {
-                "method": "GET",
-                "path": "/domains",
-                "description": "Free: list all cached domains with backlink counts.",
-                "price": "$0.00",
-                "currency": "USDC",
-            },
-            {
-                "method": "GET",
-                "path": "/find",
-                "description": "Find verified business email given first name, last name, and company domain.",
-                "price": "$0.05",
-                "currency": "USDC",
-            },
+                "method": e["method"],
+                "path": e["path"],
+                "description": e["description"],
+                "accepts": [
+                    {
+                        "scheme": "exact",
+                        "network": EVM_NETWORK,
+                        "asset": "USDC",
+                        "amount": e["amount_atomic"],
+                        "amountDisplay": e["price_usd"],
+                        "payTo": EVM_ADDRESS,
+                    }
+                ] if e["amount_atomic"] else [],
+                "input": {
+                    "type": "http",
+                    "method": e["method"],
+                    **({"queryParams": e["query_params"]} if e["query_params"] else {}),
+                },
+                "output": (
+                    {"type": "json", "example": e["output_example"]}
+                    if e["output_example"] is not None
+                    else {"type": "json"}
+                ),
+            }
+            for e in ENDPOINT_CATALOG
         ],
     }
 
@@ -418,29 +404,29 @@ async def services_manifest():
 async def llms_txt():
     """LLMs.txt convention for AI crawler discovery."""
     from fastapi.responses import PlainTextResponse
-    return PlainTextResponse(
-        "# Backlink Finder\n"
-        "> Backlink discovery API for AI agents. Pay per query with USDC via x402.\n"
-        "\n"
-        "## Endpoints\n"
-        "- GET /backlinks/{domain} — $0.10 USDC — All backlinks for any domain\n"
-        "- GET /gap?yours=X&competitor=Y — $0.15 USDC — Gap analysis between two domains\n"
-        "- GET /preview/{domain} — Free — Top 5 backlinks for cached domains\n"
-        "- GET /domains — Free — List all cached domains\n"
-        "- GET /find?first_name=John&last_name=Doe&domain=acme.com — $0.05 USDC — Find verified business email\n"
-        "- GET /health — Free — Health check\n"
-        "\n"
-        "## Payment\n"
-        "- Protocol: x402 (HTTP 402 micropayments)\n"
-        "- Currency: USDC on Base\n"
-        "- No API keys or accounts needed\n"
-        "- Agent discovery: GET /.well-known/x402.json\n"
-        "\n"
-        "## Links\n"
-        "- Website: https://backlink-finder.fly.dev\n"
-        "- Services manifest: https://backlink-finder.fly.dev/services.json\n",
-        media_type="text/plain",
-    )
+    lines = [
+        "# Backlink Finder",
+        "> Backlink discovery API for AI agents. Pay per query with USDC via x402.",
+        "",
+        "## Endpoints",
+    ]
+    for e in ENDPOINT_CATALOG:
+        price = f"{e['price_usd']} USDC" if e["price_usd"] else "Free"
+        lines.append(f"- {e['method']} {e['path']} — {price} — {e['description']}")
+    lines += [
+        "",
+        "## Payment",
+        "- Protocol: x402 (HTTP 402 micropayments)",
+        "- Currency: USDC on Base",
+        "- No API keys or accounts needed",
+        "- Agent discovery: GET /.well-known/x402.json",
+        "",
+        "## Links",
+        "- Website: https://backlink-finder.fly.dev",
+        "- Services manifest: https://backlink-finder.fly.dev/services.json",
+        "",
+    ]
+    return PlainTextResponse("\n".join(lines), media_type="text/plain")
 
 
 @app.get("/robots.txt")
@@ -480,17 +466,17 @@ async def root(request: Request):
     accept = request.headers.get("accept", "")
     if "text/html" in accept:
         return FileResponse("static/index.html")
+    endpoints = {
+        e["path"]: f"{e['description']} ({e['price_usd']} USDC)" if e["price_usd"]
+        else f"{e['description']} (free)"
+        for e in ENDPOINT_CATALOG
+    }
+    endpoints["/.well-known/x402.json"] = "Agent discovery"
     return {
         "service": "bhrefs — SEO Tools for AI Agents",
         "version": "0.1.0",
         "description": "SEO tools built for AI agents. Pay per query with USDC via x402.",
-        "endpoints": {
-            "/domains": "List available domains (free)",
-            "/backlinks/{domain}": "Get all backlinks ($0.10 USDC)",
-            "/gap?yours=X&competitor=Y": "Gap analysis ($0.15 USDC)",
-            "/health": "Health check (free)",
-            "/.well-known/x402.json": "Agent discovery",
-        },
+        "endpoints": endpoints,
         "payment": "x402 protocol — USDC on Base network",
     }
 
