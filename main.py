@@ -520,6 +520,44 @@ async def health():
     return {"status": "ok", "service": "backlink-finder", "version": "0.1.0"}
 
 
+@app.get("/parquet-status")
+async def parquet_status():
+    """Conversion / data-freshness status for the Common Crawl parquet store.
+
+    Exposes counts and sizes — no internal paths — so monitoring can detect
+    when the fast path is unavailable or when a new release needs conversion.
+    """
+    from crawler import PARQUET_DIR, _parquet_available
+    edges_dir = os.path.join(PARQUET_DIR, "edges")
+    verts_path = os.path.join(PARQUET_DIR, "vertices.parquet")
+
+    vertices_mb = (
+        round(os.path.getsize(verts_path) / 1024**2, 1)
+        if os.path.isfile(verts_path) else None
+    )
+    bucket_files = (
+        [f for f in os.listdir(edges_dir) if f.endswith(".parquet")]
+        if os.path.isdir(edges_dir) else []
+    )
+    edges_total_gb = (
+        round(sum(os.path.getsize(os.path.join(edges_dir, f)) for f in bucket_files) / 1024**3, 2)
+        if bucket_files else None
+    )
+    last_modified = None
+    if bucket_files:
+        last_modified = max(
+            os.path.getmtime(os.path.join(edges_dir, f)) for f in bucket_files
+        )
+
+    return {
+        "available": _parquet_available(),
+        "vertices_parquet_mb": vertices_mb,
+        "edge_bucket_count": len(bucket_files),
+        "edges_total_gb": edges_total_gb,
+        "edges_last_modified_unix": last_modified,
+    }
+
+
 def authority_score(num_hosts: int) -> int:
     """Derive a 0–100 authority score from Common Crawl host count."""
     if num_hosts <= 0:
