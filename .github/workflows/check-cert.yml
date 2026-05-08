@@ -11,8 +11,6 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          flyctl certs list --app backlink-finder
-          echo "---bhrefs---"
-          flyctl certs show bhrefs.com --app backlink-finder
+          flyctl certs setup bhrefs.com --app backlink-finder
           echo "---www---"
-          flyctl certs show www.bhrefs.com --app backlink-finder
+          flyctl certs setup www.bhrefs.com --app backlink-finder
