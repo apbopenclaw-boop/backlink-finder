@@ -1,5 +1,5 @@
 """
-Backlink Finder API — x402 micropayment service.
+bhrefs — SEO Tools for AI Agents. x402 micropayment service.
 
 Endpoints:
   GET /health          — free health check
@@ -49,7 +49,7 @@ if not EVM_ADDRESS:
 # ── FastAPI app ─────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="Backlink Finder API",
+    title="bhrefs API",
     description="Find backlinks to any domain using Common Crawl data. Pay per query with USDC.",
     version="0.1.0",
     docs_url=None,
@@ -324,13 +324,13 @@ def get_db() -> sqlite3.Connection:
 async def services_manifest():
     """Agentic Market / Bazaar service manifest for auto-discovery."""
     return {
-        "id": "backlink-finder",
-        "name": "Backlink Finder",
-        "description": "Backlink discovery API for AI agents. Find every domain linking to any target using web-scale crawl data.",
+        "id": "bhrefs",
+        "name": "bhrefs — SEO Tools for AI Agents",
+        "description": "A suite of SEO tools built for AI agents. Backlink discovery, competitive gap analysis, and email enrichment — all pay-per-query with USDC via x402.",
         "category": "data",
         "x402Version": 2,
         "networks": [EVM_NETWORK],
-        "website": "https://backlink-finder.fly.dev",
+        "website": "https://bhrefs.com",
         "endpoints": [
             {
                 "method": e["method"],
@@ -350,13 +350,13 @@ async def x402_manifest():
     return {
         "x402Version": 2,
         "service": {
-            "id": "backlink-finder",
-            "name": "Backlink Finder",
-            "description": "Backlink discovery API for AI agents. Find every domain linking to any target using web-scale Common Crawl data, plus competitive gap analysis and verified email enrichment. Pay per query with USDC — no API keys, no accounts.",
+            "id": "bhrefs",
+            "name": "bhrefs — SEO Tools for AI Agents",
+            "description": "A suite of SEO tools built for AI agents. Backlink discovery, competitive gap analysis, and email enrichment — all pay-per-query with USDC via x402.",
             "category": "data",
-            "website": "https://backlink-finder.fly.dev",
-            "documentation": "https://backlink-finder.fly.dev/llms.txt",
-            "servicesManifest": "https://backlink-finder.fly.dev/services.json",
+            "website": "https://bhrefs.com",
+            "documentation": "https://bhrefs.com/llms.txt",
+            "servicesManifest": "https://bhrefs.com/services.json",
         },
         "payment": {
             "schemes": ["exact"],
@@ -406,8 +406,8 @@ async def llms_txt():
     """LLMs.txt convention for AI crawler discovery."""
     from fastapi.responses import PlainTextResponse
     lines = [
-        "# Backlink Finder",
-        "> Backlink discovery API for AI agents. Pay per query with USDC via x402.",
+        "# bhrefs — SEO Tools for AI Agents",
+        "> A suite of SEO tools built for AI agents. Pay per query with USDC via x402.",
         "",
         "## Endpoints",
     ]
@@ -423,8 +423,8 @@ async def llms_txt():
         "- Agent discovery: GET /.well-known/x402.json",
         "",
         "## Links",
-        "- Website: https://backlink-finder.fly.dev",
-        "- Services manifest: https://backlink-finder.fly.dev/services.json",
+        "- Website: https://bhrefs.com",
+        "- Services manifest: https://bhrefs.com/services.json",
         "",
     ]
     return PlainTextResponse("\n".join(lines), media_type="text/plain")

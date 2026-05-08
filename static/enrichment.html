@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Email Enrichment API — Contact Discovery for AI Agents</title>
 <meta name="description" content="Find verified business email addresses by name and company domain. The first enrichment API built for AI agents — pay per lookup with USDC, no API keys needed.">
-<link rel="canonical" href="https://backlink-finder.fly.dev/enrichment">
+<link rel="canonical" href="https://bhrefs.com/enrichment">
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 
 <!-- Open Graph -->
 <meta property="og:title" content="Email Enrichment API — Contact Discovery for AI Agents">
 <meta property="og:description" content="Find verified business emails by name and domain. AI agents pay per lookup with USDC via x402. No API keys, no subscriptions.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://backlink-finder.fly.dev/enrichment">
-<meta property="og:image" content="https://backlink-finder.fly.dev/static/og-image.jpg">
+<meta property="og:url" content="https://bhrefs.com/enrichment">
+<meta property="og:image" content="https://bhrefs.com/static/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 
@@ -21,15 +21,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Email Enrichment API — Contact Discovery for AI Agents">
 <meta name="twitter:description" content="Find verified business emails by name and domain. Pay per lookup via x402 — built for AI agents.">
-<meta name="twitter:image" content="https://backlink-finder.fly.dev/static/og-image.jpg">
+<meta name="twitter:image" content="https://bhrefs.com/static/og-image.jpg">
 
 <!-- Structured Data -->
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"Email Enrichment API","url":"https://backlink-finder.fly.dev/enrichment","description":"Email enrichment API for AI agents. Find business contacts by name and domain. Pay per lookup with USDC via x402 protocol.","applicationCategory":"Business Tool","operatingSystem":"Web","offers":{"@type":"Offer","price":"0.05","priceCurrency":"USD","description":"Per-lookup pricing via USDC micropayments"}}
+{"@context":"https://schema.org","@type":"WebApplication","name":"Email Enrichment API","url":"https://bhrefs.com/enrichment","description":"Email enrichment API for AI agents. Find business contacts by name and domain. Pay per lookup with USDC via x402 protocol.","applicationCategory":"Business Tool","operatingSystem":"Web","offers":{"@type":"Offer","price":"0.05","priceCurrency":"USD","description":"Per-lookup pricing via USDC micropayments"}}
 </script>
 
 <!-- Plausible Analytics -->
-<script defer data-domain="backlink-finder.fly.dev" src="https://plausible.io/js/script.js"></script>
+<script defer data-domain="bhrefs.com" src="https://plausible.io/js/script.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#fff5ee;--card:#ffffff;--border:#e2dbd3;--text:#0f161e;--muted:#6b7280;--accent:#004038;--accent-hover:#00544c;--green:#7edcaf;--amber:#f59e0b;--cyan:#00544c;--indigo:#004038;--peach:#fde8ce;--forest:#012620}
@@ -332,7 +332,7 @@ footer .back{margin-top:8px}
         <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--accent)">$0.05</span> &nbsp; Find Email</h3>
         <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Look up a professional email address by first name, last name, and company domain.</p>
         <div class="code-block"><span class="comment"># Basic lookup</span>
-curl "<span class="url">https://backlink-finder.fly.dev/find?first_name=John&amp;last_name=Smith&amp;domain=example.com</span>"
+curl "<span class="url">https://bhrefs.com/find?first_name=John&amp;last_name=Smith&amp;domain=example.com</span>"
 
 <span class="comment"># First call returns 402 with payment details.</span>
 <span class="comment"># With x402 client, payment is handled automatically:</span>
@@ -361,7 +361,7 @@ client.register(<span class="string">"eip155:8453"</span>, ExactEvmScheme(signer
 session = x402_requests(client)
 
 <span class="comment"># Payment is handled automatically on 402 response</span>
-resp = session.get(<span class="string">"https://backlink-finder.fly.dev/find"</span>, params={
+resp = session.get(<span class="string">"https://bhrefs.com/find"</span>, params={
     <span class="string">"first_name"</span>: <span class="string">"John"</span>,
     <span class="string">"last_name"</span>: <span class="string">"Smith"</span>,
     <span class="string">"domain"</span>: <span class="string">"example.com"</span>
@@ -372,7 +372,7 @@ print(resp.json()[<span class="string">"email"</span>])  <span class="comment">#
       <div>
         <h3 style="font-size:15px;margin-bottom:8px"><span style="color:var(--muted)">DISCOVERY</span> &nbsp; Agent Integration</h3>
         <p style="color:var(--muted);font-size:13px;margin-bottom:8px">AI agents discover pricing and payment details automatically.</p>
-        <div class="code-block">curl <span class="url">https://backlink-finder.fly.dev/.well-known/x402.json</span>
+        <div class="code-block">curl <span class="url">https://bhrefs.com/.well-known/x402.json</span>
 
 <span class="comment"># Returns: payment network, wallet address, per-endpoint pricing</span></div>
       </div>
@@ -382,10 +382,10 @@ print(resp.json()[<span class="string">"email"</span>])  <span class="comment">#
 
 <section class="cta-section">
   <div class="container">
-    <h2>Part of the Backlink Finder Suite</h2>
+    <h2>Part of the bhrefs Suite</h2>
     <p>Email enrichment works great alongside our backlink discovery API. Find link-building opportunities, then find the right person to contact.</p>
     <div class="links">
-      <a href="/" class="secondary">Backlink Finder API</a>
+      <a href="/" class="secondary">bhrefs — SEO Tools</a>
       <a href="#api" class="primary">View API Docs</a>
     </div>
   </div>
@@ -394,7 +394,7 @@ print(resp.json()[<span class="string">"email"</span>])  <span class="comment">#
 <footer>
   <div class="container">
     Payments via <a href="https://x402.org">x402</a> protocol · USDC on <a href="https://base.org">Base</a>
-    <div class="back"><a href="/">← Back to Backlink Finder</a></div>
+    <div class="back"><a href="/">← Back to bhrefs</a></div>
   </div>
 </footer>
 
