@@ -7,10 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - name: Check certs
+      - name: Reset and re-add cert
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          flyctl certs setup bhrefs.com --app backlink-finder
-          echo "---www---"
-          flyctl certs setup www.bhrefs.com --app backlink-finder
+          flyctl certs remove bhrefs.com --app backlink-finder -y || true
+          sleep 5
+          flyctl certs add bhrefs.com --app backlink-finder
+          sleep 10
+          flyctl certs check bhrefs.com --app backlink-finder
