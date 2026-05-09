@@ -173,13 +173,31 @@ def _input_schema(query_params: dict[str, str], required: list[str] | None = Non
 
 ENDPOINT_CATALOG: list[dict] = [
     {
+        # Query-param style — primary, matches the convention used across
+        # the other x402-* agents (?domain=...). Listed first so agents
+        # discovering via /services.json prefer it.
         "method": "GET",
-        "path": "/backlinks/{domain}",
-        "route_pattern": "GET /backlinks/*",
+        "path": "/backlinks",
+        "route_pattern": "GET /backlinks",
         "description": "Get all backlinks for any domain. Crawls on-demand from Common Crawl if not cached (may take 2-5 min for new domains).",
         "price_usd": "$0.10",
         "amount_atomic": "100000",
         "query_params": {"domain": "example.com"},
+        "output_example": {
+            "domain": "example.com",
+            "backlink_count": 142,
+            "backlinks": [{"linking_domain": "github.com", "num_hosts": 6038, "authority_score": 57}],
+        },
+    },
+    {
+        # Path-param alias — preserved for backward compatibility.
+        "method": "GET",
+        "path": "/backlinks/{domain}",
+        "route_pattern": "GET /backlinks/*",
+        "description": "Path-param alias of /backlinks?domain=… — same data, same price.",
+        "price_usd": "$0.10",
+        "amount_atomic": "100000",
+        "query_params": {},
         "output_example": {
             "domain": "example.com",
             "backlink_count": 142,
@@ -853,6 +871,12 @@ async def find_email(
 
 
 # ── Paid endpoints ──────────────────────────────────────────────────
+
+
+@app.get("/backlinks")
+async def get_backlinks_query(domain: str = Query(..., description="Domain to look up backlinks for")):
+    """Query-param variant — matches the convention used across other x402-* agents."""
+    return await get_backlinks(domain)
 
 
 @app.get("/backlinks/{domain}")
