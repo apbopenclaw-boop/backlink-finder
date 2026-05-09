@@ -304,6 +304,12 @@ _MAX_CONCURRENT_CRAWLS = 3
 _active_crawls = [0]
 _crawl_count_lock = threading.Lock()
 app.add_middleware(PaymentMiddlewareASGI, routes=routes, server=server)
+# Outer middleware that polishes the upstream 402 responses to match the
+# x402 spec: JSON payload in body, https:// in resource.url (Fly TLS proxy
+# fix), CORS headers, and an x-payment-required v1 fallback. Must be
+# registered AFTER PaymentMiddlewareASGI so it wraps it.
+from x402_polish import X402ResponsePolish  # noqa: E402
+app.add_middleware(X402ResponsePolish)
 
 # Serve static assets (OG image, etc.)
 app.mount("/static", StaticFiles(directory="static"), name="static")

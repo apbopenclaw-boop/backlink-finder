@@ -10,7 +10,7 @@ COPY pyproject.toml .
 RUN uv pip install --system "fastapi>=0.115" "uvicorn>=0.34" "x402[fastapi,evm]>=2.9" "python-dotenv>=1.0" "duckdb>=1.2" "PyJWT[crypto]>=2.8" "httpx>=0.27"
 
 # Copy application
-COPY main.py crawler.py cdp_auth.py convert_parquet_prod.py entrypoint.sh ./
+COPY main.py crawler.py cdp_auth.py convert_parquet_prod.py entrypoint.sh x402_polish.py ./
 COPY static static
 
 # Seed DB baked into image (copied to volume on first run)
