@@ -21,6 +21,11 @@ dev = [
 requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+# Service, not a library — no installable package. Without this, setuptools
+# auto-discovery trips on the top-level mcp/ and static/ directories.
+py-modules = []
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
