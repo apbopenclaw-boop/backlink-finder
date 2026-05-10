@@ -922,6 +922,10 @@ async def get_backlinks(domain: str):
             lock.release()
             _crawl_locks.pop(domain, None)
 
+        if not results:
+            # 4xx so x402 SDK skips settle — no charge for empty crawl results
+            raise HTTPException(status_code=404, detail=f"No backlinks found for {domain}")
+
         return {
             "domain": domain,
             "release": "cc-main-2026-jan-feb-mar",
@@ -966,6 +970,10 @@ async def get_backlinks(domain: str):
         (crawl_id,),
     ).fetchall()
     con.close()
+
+    if not results:
+        # 4xx so x402 SDK skips settle — no charge for empty cache hits
+        raise HTTPException(status_code=404, detail=f"No backlinks found for {domain}")
 
     return {
         "domain": domain,
