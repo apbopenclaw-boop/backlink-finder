@@ -10,6 +10,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "duckdb>=1.2",
     "httpx>=0.27",
+    "PyJWT[crypto]>=2.8",
 ]
 
 [project.optional-dependencies]
@@ -20,6 +21,11 @@ dev = [
 [build-system]
 requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# Service, not a library — no installable package. Without this, setuptools
+# auto-discovery trips on the top-level mcp/ and static/ directories.
+py-modules = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
