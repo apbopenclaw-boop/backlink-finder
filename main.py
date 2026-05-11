@@ -664,12 +664,25 @@ async def preview_backlinks(domain: str):
         raise HTTPException(status_code=404, detail=f"No cached data for {domain}")
 
     crawl_id, release, crawled_at, total = row
-    # Fetch more than 5 so we can filter out generic platforms
+    # Fetch more than 5 so we can filter out generic platforms; pull per-linker
+    # DR so the free preview shows authority alongside raw hits.
     results = con.execute(
-        "SELECT linking_domain, num_hosts FROM backlinks WHERE crawl_id = ? "
-        "ORDER BY num_hosts DESC LIMIT 50",
+        """
+        SELECT b.linking_domain, b.num_hosts, p.dr_score
+        FROM backlinks b
+        LEFT JOIN pagerank_cache p ON p.domain = b.linking_domain
+        WHERE b.crawl_id = ?
+        ORDER BY p.dr_score DESC NULLS LAST, b.num_hosts DESC
+        LIMIT 50
+        """,
         (crawl_id,),
     ).fetchall()
+    # Free preview of the target's own DR so agents can decide whether the
+    # paid /backlinks or /bundle is worth it.
+    target = con.execute(
+        "SELECT dr_score, harmonic_rank FROM pagerank_cache WHERE domain = ?",
+        (domain,),
+    ).fetchone()
     con.close()
 
     filtered = [
@@ -678,14 +691,18 @@ async def preview_backlinks(domain: str):
 
     return {
         "domain": domain,
+        "target_dr_score": target[0] if target else None,
+        "target_harmonic_rank": target[1] if target else None,
         "total_backlinks": total,
         "preview": True,
         "showing": len(filtered),
         "backlinks": [
-            {"linking_domain": r[0], "num_hosts": r[1], "authority_score": authority_score(r[1])}
+            {"linking_domain": r[0], "num_hosts": r[1], "dr_score": r[2],
+             "authority_score": authority_score(r[1])}
             for r in filtered
         ],
-        "upgrade": f"Pay $0.01 USDC via /backlinks?domain={domain} for all {total} results",
+        "upgrade": f"Pay $0.01 USDC via /backlinks?domain={domain} for all {total} results, "
+                   f"or $0.015 via /bundle?domain={domain} for backlinks plus the target's own DR profile.",
     }
 
 
