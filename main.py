@@ -186,7 +186,18 @@ ENDPOINT_CATALOG: list[dict] = [
         "output_example": {
             "domain": "example.com",
             "backlink_count": 142,
-            "backlinks": [{"linking_domain": "github.com", "num_hosts": 6038, "authority_score": 57}],
+            "backlinks": [{
+                "linking_domain": "github.com",
+                "num_hosts": 6038,
+                "dr_score": 92,
+                "harmonic_rank": 24,
+                "pagerank": 0.00481,
+                "authority_score": 57,
+                "majestic_rank": 38,
+                "ref_subnets": 412330,
+                "ref_ips": 891204,
+                "tranco_rank": 51
+            }],
         },
     },
     {
@@ -201,7 +212,18 @@ ENDPOINT_CATALOG: list[dict] = [
         "output_example": {
             "domain": "example.com",
             "backlink_count": 142,
-            "backlinks": [{"linking_domain": "github.com", "num_hosts": 6038, "authority_score": 57}],
+            "backlinks": [{
+                "linking_domain": "github.com",
+                "num_hosts": 6038,
+                "dr_score": 92,
+                "harmonic_rank": 24,
+                "pagerank": 0.00481,
+                "authority_score": 57,
+                "majestic_rank": 38,
+                "ref_subnets": 412330,
+                "ref_ips": 891204,
+                "tranco_rank": 51
+            }],
         },
     },
     {
@@ -925,27 +947,8 @@ async def get_backlinks(domain: str):
         if not results:
             # 4xx so x402 SDK skips settle — no charge for empty crawl results
             raise HTTPException(status_code=404, detail=f"No backlinks found for {domain}")
-
-        return {
-            "domain": domain,
-            "release": "cc-main-2026-jan-feb-mar",
-            "crawled_at": "just now",
-            "backlink_count": len(results),
-            "source": "live_crawl",
-            "backlinks": [
-                {
-                    "linking_domain": r["domain"],
-                    "num_hosts": r["num_hosts"],
-                    "authority_score": authority_score(r["num_hosts"]),
-                    "page_rank": None,
-                    "majestic_rank": None,
-                    "ref_subnets": None,
-                    "ref_ips": None,
-                    "tranco_rank": None,
-                }
-                for r in results
-            ],
-        }
+        # Fall through to the cached path below; crawl_and_store just wrote
+        # the rows, so we can re-query with the full DR/Majestic/Tranco JOIN.
 
     # Cached path
     con = get_db()  # re-open in case crawl path closed it
@@ -958,14 +961,16 @@ async def get_backlinks(domain: str):
     crawl_id, release, crawled_at = row
     results = con.execute(
         """
-        SELECT b.linking_domain, b.num_hosts, b.page_rank,
+        SELECT b.linking_domain, b.num_hosts,
+               p.dr_score, p.harmonic_rank, p.pr_val,
                m.global_rank, m.ref_subnets, m.ref_ips,
                t.tranco_rank
         FROM backlinks b
+        LEFT JOIN pagerank_cache p ON p.domain = b.linking_domain
         LEFT JOIN majestic_cache m ON m.domain = b.linking_domain
-        LEFT JOIN tranco_cache t ON t.domain = b.linking_domain
+        LEFT JOIN tranco_cache t  ON t.domain = b.linking_domain
         WHERE b.crawl_id = ?
-        ORDER BY b.num_hosts DESC, b.linking_domain
+        ORDER BY p.dr_score DESC NULLS LAST, b.num_hosts DESC, b.linking_domain
         """,
         (crawl_id,),
     ).fetchall()
@@ -984,12 +989,14 @@ async def get_backlinks(domain: str):
             {
                 "linking_domain": r[0],
                 "num_hosts": r[1],
+                "dr_score": r[2],             # Domain Rating equivalent, 0-100 (Common Crawl Web Graph harmonic centrality, log-rank mapped)
+                "harmonic_rank": r[3],        # raw CCWG rank, 1 = strongest
+                "pagerank": r[4],             # raw CCWG PageRank value
                 "authority_score": authority_score(r[1]),
-                "page_rank": r[2],
-                "majestic_rank": r[3],
-                "ref_subnets": r[4],
-                "ref_ips": r[5],
-                "tranco_rank": r[6],
+                "majestic_rank": r[5],
+                "ref_subnets": r[6],
+                "ref_ips": r[7],
+                "tranco_rank": r[8],
             }
             for r in results
         ],

@@ -167,13 +167,23 @@ def init_db(db_path: str) -> sqlite3.Connection:
             UNIQUE(crawl_id, linking_domain)
         )
     """)
+    # pagerank_cache holds the Common Crawl Web Graph domain ranks
+    # (cc-main-*-domain-ranks). harmonic_rank is the headline metric (Ahrefs DR
+    # equivalent — same log-rank shape). dr_score is the derived 0-100 score
+    # surfaced in /backlinks responses. See ingest_ccwg.py.
     con.execute("""
         CREATE TABLE IF NOT EXISTS pagerank_cache (
-            domain      TEXT PRIMARY KEY,
-            page_rank   REAL,
-            fetched_at  TEXT NOT NULL
+            domain         TEXT PRIMARY KEY,
+            harmonic_rank  INTEGER NOT NULL,
+            harmonic_val   REAL,
+            pr_rank        INTEGER,
+            pr_val         REAL,
+            n_hosts        INTEGER,
+            dr_score       INTEGER,
+            fetched_at     TEXT NOT NULL
         )
     """)
+    con.execute("CREATE INDEX IF NOT EXISTS idx_pagerank_harmonic ON pagerank_cache(harmonic_rank)")
     con.execute("""
         CREATE TABLE IF NOT EXISTS majestic_cache (
             domain          TEXT PRIMARY KEY,
