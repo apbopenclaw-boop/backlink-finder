@@ -4,7 +4,7 @@ bhrefs — SEO Tools for AI Agents. x402 micropayment service.
 Endpoints:
   GET /health          — free health check
   GET /domains         — free: list available domains
-  GET /backlinks/{domain} — $0.05: get all backlinks for a domain
+  GET /backlinks?domain=X — $0.01: get all backlinks for a domain
   GET /gap?yours=X&competitor=Y — $0.10: gap analysis
 """
 
@@ -180,8 +180,8 @@ ENDPOINT_CATALOG: list[dict] = [
         "path": "/backlinks",
         "route_pattern": "GET /backlinks",
         "description": "Get all backlinks for any domain. Crawls on-demand from Common Crawl if not cached (may take 2-5 min for new domains).",
-        "price_usd": "$0.10",
-        "amount_atomic": "100000",
+        "price_usd": "$0.01",
+        "amount_atomic": "10000",
         "query_params": {"domain": "example.com"},
         "output_example": {
             "domain": "example.com",
@@ -195,8 +195,8 @@ ENDPOINT_CATALOG: list[dict] = [
         "path": "/backlinks/{domain}",
         "route_pattern": "GET /backlinks/*",
         "description": "Path-param alias of /backlinks?domain=… — same data, same price.",
-        "price_usd": "$0.10",
-        "amount_atomic": "100000",
+        "price_usd": "$0.01",
+        "amount_atomic": "10000",
         "query_params": {},
         "output_example": {
             "domain": "example.com",
@@ -630,7 +630,7 @@ async def preview_backlinks(domain: str):
             {"linking_domain": r[0], "num_hosts": r[1], "authority_score": authority_score(r[1])}
             for r in filtered
         ],
-        "upgrade": f"Pay $0.10 USDC via /backlinks/{domain} for all {total} results",
+        "upgrade": f"Pay $0.01 USDC via /backlinks?domain={domain} for all {total} results",
     }
 
 
@@ -881,7 +881,7 @@ async def get_backlinks_query(domain: str = Query(..., description="Domain to lo
 
 @app.get("/backlinks/{domain}")
 async def get_backlinks(domain: str):
-    """Get all backlinks for a domain. Crawls on-demand if not cached. Costs $0.10 USDC."""
+    """Get all backlinks for a domain. Crawls on-demand if not cached. Costs $0.01 USDC."""
     try:
         domain = validate_domain(domain)
     except ValueError as e:
