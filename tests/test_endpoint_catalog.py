@@ -45,7 +45,7 @@ def test_paid_routes_have_atomic_amounts_consistent_with_price(main_module):
 def test_routes_dict_built_from_paid_entries(main_module):
     paid = [e for e in main_module.ENDPOINT_CATALOG if e["route_pattern"] is not None]
     assert set(main_module.routes.keys()) == {e["route_pattern"] for e in paid}
-    assert len(main_module.routes) == 4
+    assert len(main_module.routes) == 5
 
 
 def test_services_manifest_uses_catalog(main_module):
@@ -62,7 +62,7 @@ def test_x402_manifest_structure(main_module):
 
     paid = [e for e in resp["endpoints"] if e["accepts"]]
     free = [e for e in resp["endpoints"] if not e["accepts"]]
-    assert len(paid) == 4
+    assert len(paid) == 5
     assert len(free) == 4
 
     # Each paid endpoint declares an exact-scheme accept on Base mainnet

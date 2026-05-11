@@ -5,6 +5,7 @@ Endpoints:
   GET /health          — free health check
   GET /domains         — free: list available domains
   GET /backlinks?domain=X — $0.01: get all backlinks for a domain
+  GET /bundle?domain=X    — $0.015 combo: target DR + full backlinks
   GET /gap?yours=X&competitor=Y — $0.10: gap analysis
 """
 
@@ -211,6 +212,38 @@ ENDPOINT_CATALOG: list[dict] = [
         "query_params": {},
         "output_example": {
             "domain": "example.com",
+            "backlink_count": 142,
+            "backlinks": [{
+                "linking_domain": "github.com",
+                "num_hosts": 6038,
+                "dr_score": 92,
+                "harmonic_rank": 24,
+                "pagerank": 0.00481,
+                "authority_score": 57,
+                "majestic_rank": 38,
+                "ref_subnets": 412330,
+                "ref_ips": 891204,
+                "tranco_rank": 51
+            }],
+        },
+    },
+    {
+        # Combo deal — the target domain's own DR + its full backlinks list
+        # in a single call. Cheaper than buying the backlinks ($0.01) and a
+        # separate DR lookup ($0.005-ish if standalone existed).
+        "method": "GET",
+        "path": "/bundle",
+        "route_pattern": "GET /bundle",
+        "description": "Bundle: target domain's own DR + full backlinks list with per-linker DR. Combo deal at $0.015.",
+        "price_usd": "$0.015",
+        "amount_atomic": "15000",
+        "query_params": {"domain": "example.com"},
+        "output_example": {
+            "domain": "example.com",
+            "target_dr_score": 88,
+            "target_harmonic_rank": 1234,
+            "target_pagerank": 0.00012,
+            "target_n_hosts": 56,
             "backlink_count": 142,
             "backlinks": [{
                 "linking_domain": "github.com",
@@ -1001,6 +1034,30 @@ async def get_backlinks(domain: str):
             for r in results
         ],
     }
+
+
+@app.get("/bundle")
+async def bundle(domain: str = Query(..., description="Domain to look up DR + backlinks for")):
+    """Combo: target's own DR + the full backlinks list. Costs $0.015 USDC.
+
+    Delegates the backlinks part to get_backlinks (same crawl-if-missing,
+    same 404-on-empty semantics — x402 SDK skips settle on 4xx so callers
+    aren't charged when the target has no backlinks). Then adds the target
+    domain's own CCWG signals from pagerank_cache.
+    """
+    response = await get_backlinks(domain)
+    normalised = response["domain"]
+    con = get_db()
+    target = con.execute(
+        "SELECT dr_score, harmonic_rank, pr_val, n_hosts FROM pagerank_cache WHERE domain = ?",
+        (normalised,),
+    ).fetchone()
+    con.close()
+    response["target_dr_score"] = target[0] if target else None
+    response["target_harmonic_rank"] = target[1] if target else None
+    response["target_pagerank"] = target[2] if target else None
+    response["target_n_hosts"] = target[3] if target else None
+    return response
 
 
 @app.get("/gap")
